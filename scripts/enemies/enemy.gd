@@ -1,6 +1,7 @@
 extends CharacterBody2D
 
 signal defeated(enemy: Node, drop_data: Dictionary)
+signal engagement_changed(enemy: Node, engaged: bool)
 
 const IsoMapper := preload("res://scripts/core/iso.gd")
 
@@ -59,6 +60,7 @@ var hit_flash_timer: float = 0.0
 var slam_timer: float = 0.0
 var slam_charge: float = 0.0
 var render_origin: Vector2 = Vector2.ZERO
+var _engaged: bool = false
 
 
 func setup(type_name: String, game_ref: Node, extra_data: Dictionary = {}) -> void:
@@ -108,6 +110,7 @@ func _physics_process(delta: float) -> void:
 			_resolve_slam()
 
 	if not active or player == null or not is_instance_valid(player):
+		_set_engaged(false)
 		velocity = Vector2.ZERO
 		move_and_slide()
 		return
@@ -115,9 +118,12 @@ func _physics_process(delta: float) -> void:
 	var to_player: Vector2 = player.global_position - global_position
 	var distance: float = to_player.length()
 	if distance > stats["chase_range"]:
+		_set_engaged(false)
 		velocity = Vector2.ZERO
 		move_and_slide()
 		return
+
+	_set_engaged(true)
 
 	if enemy_type == "boss" and slam_timer <= 0.0 and slam_charge <= 0.0 and distance < 150.0:
 		slam_charge = stats["slam_windup"]
@@ -135,6 +141,19 @@ func _physics_process(delta: float) -> void:
 			player.take_damage(stats["damage"])
 	move_and_slide()
 	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+
+
+
+
+func _exit_tree() -> void:
+	_set_engaged(false)
+
+
+func _set_engaged(value: bool) -> void:
+	if _engaged == value:
+		return
+	_engaged = value
+	emit_signal("engagement_changed", self, _engaged)
 
 
 func _draw() -> void:

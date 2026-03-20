@@ -54,6 +54,7 @@ var exit_portal: Area2D = null
 var active: bool = true
 var is_final_level: bool = false
 var render_origin: Vector2 = Vector2.ZERO
+var engaged_enemy_count: int = 0
 
 @onready var tiles_root: Node2D = $Tiles
 @onready var collision_root: Node2D = $Collision
@@ -184,16 +185,30 @@ func _spawn_exit(current_level_index: int, total_levels: int) -> void:
 
 func _spawn_enemies() -> void:
 	remaining_enemies = 0
+	engaged_enemy_count = 0
 	for enemy_data in level_data.get("enemies", []):
 		var enemy: CharacterBody2D = EnemyScene.instantiate()
 		enemy.position = tile_to_world(enemy_data.get("position", Vector2i.ZERO))
 		enemy.setup(enemy_data.get("type", "zombie"), game, enemy_data)
 		enemy.set_render_origin(render_origin)
 		enemy.defeated.connect(_on_enemy_defeated)
+		enemy.engagement_changed.connect(_on_enemy_engagement_changed)
 		enemies_root.add_child(enemy)
 		remaining_enemies += 1
 
 	_update_exit_state()
+
+
+
+
+func _on_enemy_engagement_changed(_enemy: Node, engaged: bool) -> void:
+	if engaged:
+		engaged_enemy_count += 1
+	else:
+		engaged_enemy_count = max(engaged_enemy_count - 1, 0)
+
+	if game != null and game.has_method("set_combat_music_active"):
+		game.set_combat_music_active(engaged_enemy_count > 0)
 
 
 func _update_exit_state() -> void:

@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/game.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GameUI.tscn" id="3"]
 [ext_resource type="Script" path="res://scripts/core/game_camera.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/audio/sound_theme_manager.gd" id="5"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1")
@@ -17,4 +18,21 @@ script = ExtResource("1")
 [node name="Camera2D" type="Camera2D" parent="CameraRig"]
 script = ExtResource("4")
 
+
+[node name="SoundThemeManager" type="Node" parent="."]
+script = ExtResource("5")
+
+[node name="MusicA" type="AudioStreamPlayer" parent="SoundThemeManager"]
+process_mode = 3
+
+[node name="MusicB" type="AudioStreamPlayer" parent="SoundThemeManager"]
+process_mode = 3
+
+[node name="CalmTimer" type="Timer" parent="SoundThemeManager"]
+process_mode = 3
+
 [node name="UI" parent="." instance=ExtResource("3")]
+
+
+
+[connection signal="timeout" from="SoundThemeManager/CalmTimer" to="SoundThemeManager" method="_on_calm_timer_timeout"]
