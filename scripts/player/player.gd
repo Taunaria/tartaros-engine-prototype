@@ -6,19 +6,26 @@ signal died
 
 const WeaponDB := preload("res://data/weapons/weapon_db.gd")
 const IsoMapper := preload("res://scripts/core/iso.gd")
+const CombatDebug := preload("res://scripts/core/combat_debug.gd")
 
 @export var move_speed := 140.0
 @export var max_hp := 12
+@export var attack_reach := 32.0
+@export var attack_width := 24.0
+@export var attack_active_duration := 0.24
+@export var debug_attack := false
 
 var hp := max_hp
 var control_enabled := true
 var weapon_inventory: Dictionary = {}
 var current_weapon_id := WeaponDB.get_default_weapon_id()
-var facing := Vector2.DOWN
+var last_direction := Vector2.DOWN
 var attack_timer := 0.0
+var attack_active_timer := 0.0
 var hit_timer := 0.0
 var attack_flash_timer := 0.0
 var render_origin: Vector2 = Vector2.ZERO
+var hit_targets: Dictionary = {}
 
 @onready var attack_area: Area2D = $AttackArea
 @onready var attack_shape: CollisionShape2D = $AttackArea/CollisionShape2D
@@ -29,26 +36,18 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	if hit_timer > 0.0:
-		hit_timer -= delta
+	_tick_timers(delta)
 
-	if attack_timer > 0.0:
-		attack_timer -= delta
-
-	if attack_flash_timer > 0.0:
-		attack_flash_timer -= delta
-		queue_redraw()
-
-	if not control_enabled:
+	if control_enabled:
+		_handle_movement()
+	else:
 		velocity = Vector2.ZERO
-		move_and_slide()
-		return
 
-	_handle_movement()
-	_update_attack_area()
-	_handle_attack()
 	move_and_slide()
 	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+	_update_attack_hitbox()
+	_handle_attack_input()
+	_update_attack_state()
 
 
 func _draw() -> void:
@@ -66,10 +65,12 @@ func _draw() -> void:
 
 	if attack_flash_timer > 0.0:
 		var weapon: Dictionary = get_current_weapon()
-		var tip_logic: Vector2 = position + facing * float(weapon["range"])
+		var tip_logic: Vector2 = position + last_direction * _get_attack_visual_length(weapon)
 		var tip: Vector2 = IsoMapper.logic_to_screen(tip_logic, render_origin) - position
 		draw_line(base, tip, weapon["color"], 4.0)
-		_draw_attack_sweep(base, weapon)
+
+	if CombatDebug.enabled:
+		_draw_debug_shapes()
 
 
 func reset_for_new_run() -> void:
@@ -78,9 +79,13 @@ func reset_for_new_run() -> void:
 	unlock_weapon(WeaponDB.get_default_weapon_id(), true)
 	equip_weapon(WeaponDB.get_default_weapon_id())
 	attack_timer = 0.0
+	attack_active_timer = 0.0
 	hit_timer = 0.0
 	attack_flash_timer = 0.0
 	control_enabled = true
+	last_direction = Vector2.DOWN
+	hit_targets.clear()
+	attack_area.monitoring = false
 	emit_signal("hp_changed", hp, max_hp)
 	queue_redraw()
 
@@ -114,7 +119,7 @@ func unlock_weapon(weapon_id: String, silent: bool = false) -> bool:
 func equip_weapon(weapon_id: String) -> void:
 	current_weapon_id = weapon_id
 	emit_signal("weapon_changed", get_current_weapon())
-	_update_attack_area()
+	_update_attack_hitbox()
 	queue_redraw()
 
 
@@ -149,56 +154,139 @@ func _handle_movement() -> void:
 	)
 
 	if direction.length_squared() > 0.0:
-		facing = direction.normalized()
+		last_direction = _to_cardinal_direction(direction)
 	velocity = direction.normalized() * move_speed
 	queue_redraw()
 
 
-func _handle_attack() -> void:
+func _handle_attack_input() -> void:
 	if not Input.is_action_just_pressed("attack"):
 		return
 
-	var weapon: Dictionary = get_current_weapon()
-	if attack_timer > 0.0:
+	if attack_timer > 0.0 or attack_active_timer > 0.0:
 		return
 
-	attack_timer = weapon["cooldown"]
-	attack_flash_timer = 0.12
+	_start_attack()
+
+
+func _start_attack() -> void:
+	var weapon: Dictionary = get_current_weapon()
+	attack_timer = float(weapon["cooldown"])
+	attack_active_timer = attack_active_duration
+	attack_flash_timer = attack_active_duration
+	hit_targets.clear()
+	attack_area.monitoring = true
+	_update_attack_hitbox()
+	_debug_attack_state("start")
+	_apply_attack_hits(weapon)
 	queue_redraw()
 
-	for body in attack_area.get_overlapping_bodies():
-		if body == self:
+
+func _update_attack_state() -> void:
+	if attack_active_timer <= 0.0:
+		attack_area.monitoring = false
+		return
+
+	_update_attack_hitbox()
+	_apply_attack_hits(get_current_weapon())
+
+
+func _update_attack_hitbox() -> void:
+	var rectangle := attack_shape.shape as RectangleShape2D
+	if rectangle == null:
+		return
+
+	var weapon: Dictionary = get_current_weapon()
+	var attack_start: float = _get_attack_start_distance()
+	var attack_end: float = _get_attack_end_distance(weapon)
+	rectangle.size = Vector2(attack_end - attack_start, _get_attack_full_width())
+	attack_area.position = last_direction * ((attack_start + attack_end) * 0.5)
+	attack_area.rotation = last_direction.angle()
+
+
+func _apply_attack_hits(weapon: Dictionary) -> void:
+	var attack_start: float = _get_attack_start_distance()
+	var attack_end: float = _get_attack_end_distance(weapon)
+	var attack_half_width: float = _get_attack_half_width()
+
+	for body in get_tree().get_nodes_in_group("enemies"):
+		if body == null or not is_instance_valid(body):
 			continue
 		if not body.has_method("take_damage"):
 			continue
-		if not _is_body_inside_swing(body, weapon):
+
+		var target_padding: float = _get_target_hit_padding(body) + 2.0
+		var attack_space_position: Vector2 = _to_attack_space(_get_attack_target_position(body))
+		if debug_attack or CombatDebug.enabled:
+			print(
+				"attack check %s forward=%.2f sideways=%.2f start=%.2f end=%.2f half=%.2f pad=%.2f"
+				% [
+					body.name,
+					attack_space_position.x,
+					absf(attack_space_position.y),
+					attack_start,
+					attack_end,
+					attack_half_width,
+					target_padding
+				]
+			)
+		if not _is_inside_attack_window(attack_space_position, attack_start, attack_end, attack_half_width, target_padding):
 			continue
-		body.take_damage(weapon["damage"])
+
+		var instance_id: int = body.get_instance_id()
+		if hit_targets.has(instance_id):
+			continue
+
+		hit_targets[instance_id] = true
+		_debug_attack_state("hit %s" % body.name)
+		body.take_damage(int(weapon["damage"]))
 
 
-func _update_attack_area() -> void:
-	var weapon: Dictionary = get_current_weapon()
-	var shape := attack_shape.shape as CircleShape2D
-	shape.radius = float(weapon.get("hit_radius", weapon["range"]))
-	attack_area.rotation = 0.0
-	attack_area.position = Vector2.ZERO
+func _tick_timers(delta: float) -> void:
+	if hit_timer > 0.0:
+		hit_timer = maxf(hit_timer - delta, 0.0)
+
+	if attack_timer > 0.0:
+		attack_timer = maxf(attack_timer - delta, 0.0)
+
+	if attack_active_timer > 0.0:
+		attack_active_timer = maxf(attack_active_timer - delta, 0.0)
+
+	if attack_flash_timer > 0.0:
+		attack_flash_timer = maxf(attack_flash_timer - delta, 0.0)
+		queue_redraw()
 
 
-func _is_body_inside_swing(body: Node2D, weapon: Dictionary) -> bool:
-	var to_body: Vector2 = body.global_position - global_position
-	var distance: float = to_body.length()
-	if distance <= 0.001:
-		return true
+func _to_cardinal_direction(direction: Vector2) -> Vector2:
+	if absf(direction.x) >= absf(direction.y):
+		return Vector2.RIGHT if direction.x >= 0.0 else Vector2.LEFT
+	return Vector2.DOWN if direction.y >= 0.0 else Vector2.UP
 
-	var hit_radius: float = float(weapon.get("hit_radius", weapon["range"])) + _get_target_hit_padding(body)
-	if distance > hit_radius:
-		return false
 
-	var half_angle: float = deg_to_rad(float(weapon.get("swing_angle_degrees", 90.0)) * 0.5)
-	var facing_direction := facing.normalized()
-	var target_direction := to_body / distance
-	var angle_to_target: float = abs(facing_direction.angle_to(target_direction))
-	return angle_to_target <= half_angle
+func _get_attack_visual_length(weapon: Dictionary) -> float:
+	return maxf(float(weapon.get("range", attack_reach)), attack_reach)
+
+
+func _get_attack_start_distance() -> float:
+	return 8.0
+
+
+func _get_attack_end_distance(weapon: Dictionary) -> float:
+	return _get_attack_visual_length(weapon) + 12.0
+
+
+func _get_attack_half_width() -> float:
+	return maxf(attack_width * 0.5, 16.0)
+
+
+func _get_attack_full_width() -> float:
+	return _get_attack_half_width() * 2.0
+
+
+func _debug_attack_state(event: String) -> void:
+	if not debug_attack and not CombatDebug.enabled:
+		return
+	print("attack %s dir=%s hitbox=%s rot=%.2f" % [event, last_direction, attack_area.global_position, attack_area.global_rotation])
 
 
 func _get_target_hit_padding(body: Node2D) -> float:
@@ -210,15 +298,84 @@ func _get_target_hit_padding(body: Node2D) -> float:
 	return 10.0
 
 
-func _draw_attack_sweep(base: Vector2, weapon: Dictionary) -> void:
-	var hit_radius: float = float(weapon.get("hit_radius", weapon["range"]))
-	var half_angle: float = deg_to_rad(float(weapon.get("swing_angle_degrees", 90.0)) * 0.5)
-	var left_edge := facing.rotated(-half_angle) * hit_radius
-	var right_edge := facing.rotated(half_angle) * hit_radius
-	var left_screen: Vector2 = IsoMapper.logic_to_screen(position + left_edge, render_origin) - position
-	var right_screen: Vector2 = IsoMapper.logic_to_screen(position + right_edge, render_origin) - position
-	draw_line(base, left_screen, weapon["color"].lightened(0.2), 2.0)
-	draw_line(base, right_screen, weapon["color"].lightened(0.2), 2.0)
+func _get_attack_target_position(body: Node2D) -> Vector2:
+	if body.has_method("get_attack_target_position"):
+		return body.get_attack_target_position()
+	return body.global_position
+
+
+func _draw_debug_shapes() -> void:
+	var hurt_shape := $CollisionShape2D.shape as CircleShape2D
+	if hurt_shape != null:
+		var hurt_center := _logic_to_local_screen(global_position)
+		draw_arc(hurt_center, hurt_shape.radius, 0.0, TAU, 32, Color(1.0, 0.3, 0.3, 0.95), 2.0)
+
+	var attack_polygon: PackedVector2Array = _get_attack_polygon()
+	if attack_polygon.size() < 3:
+		return
+
+	var debug_color := Color(0.2, 0.85, 1.0, 0.95) if attack_active_timer > 0.0 else Color(0.2, 0.55, 0.9, 0.7)
+	draw_polyline(PackedVector2Array([
+		attack_polygon[0],
+		attack_polygon[1],
+		attack_polygon[2],
+		attack_polygon[3],
+		attack_polygon[0]
+	]), debug_color, 2.0)
+
+
+func refresh_combat_debug_draw() -> void:
+	queue_redraw()
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node is Node2D:
+			(node as Node2D).queue_redraw()
+
+
+func _logic_to_local_screen(logic_position: Vector2) -> Vector2:
+	return IsoMapper.logic_to_screen(logic_position, render_origin) - global_position
+
+
+func _get_attack_polygon() -> PackedVector2Array:
+	var weapon: Dictionary = get_current_weapon()
+	var attack_start: float = _get_attack_start_distance()
+	var attack_end: float = _get_attack_end_distance(weapon)
+	var half_width: float = _get_attack_half_width()
+	var forward: Vector2 = last_direction
+	var sideways: Vector2 = Vector2(-forward.y, forward.x)
+	var corners: Array[Vector2] = [
+		global_position + forward * attack_start - sideways * half_width,
+		global_position + forward * attack_start + sideways * half_width,
+		global_position + forward * attack_end + sideways * half_width,
+		global_position + forward * attack_end - sideways * half_width
+	]
+
+	var points: PackedVector2Array = []
+	for corner in corners:
+		points.append(_logic_to_local_screen(corner))
+	return points
+
+
+func _to_attack_space(logic_position: Vector2) -> Vector2:
+	var delta: Vector2 = logic_position - global_position
+	if absf(last_direction.x) > 0.0:
+		return Vector2(delta.x * last_direction.x, delta.y)
+	return Vector2(delta.y * last_direction.y, delta.x)
+
+
+func _is_inside_attack_window(
+	attack_space_position: Vector2,
+	attack_start: float,
+	attack_end: float,
+	attack_half_width: float,
+	target_padding: float
+) -> bool:
+	var forward: float = attack_space_position.x
+	var sideways: float = absf(attack_space_position.y)
+	return (
+		forward + target_padding >= attack_start
+		and forward - target_padding <= attack_end
+		and sideways <= attack_half_width + target_padding
+	)
 
 
 func _get_render_offset() -> Vector2:

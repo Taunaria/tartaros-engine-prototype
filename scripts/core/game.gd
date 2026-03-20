@@ -4,6 +4,7 @@ const LevelData := preload("res://data/levels/level_data.gd")
 const LevelScene := preload("res://scenes/levels/Level.tscn")
 const GameCamera := preload("res://scripts/core/game_camera.gd")
 const LevelMusicTheme := preload("res://scripts/audio/level_music_theme.gd")
+const CombatDebug := preload("res://scripts/core/combat_debug.gd")
 
 @export var level_music_themes: Array[LevelMusicTheme] = []
 
@@ -35,6 +36,21 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if is_instance_valid(player):
 		camera_rig.global_position = player.get_visual_position()
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo:
+		var key_event := event as InputEventKey
+		if key_event.keycode == KEY_F3 or key_event.physical_keycode == KEY_F3:
+			var enabled: bool = CombatDebug.toggle()
+			print("combat_debug=%s" % enabled)
+			_refresh_combat_debug_draw()
+			get_viewport().set_input_as_handled()
+		elif key_event.keycode == KEY_F7 or key_event.physical_keycode == KEY_F7:
+			var enemy_logic_enabled: bool = CombatDebug.toggle_enemy_logic()
+			print("enemy_logic=%s" % enemy_logic_enabled)
+			_refresh_combat_debug_draw()
+			get_viewport().set_input_as_handled()
 
 
 func start_new_run() -> void:
@@ -171,3 +187,11 @@ func _on_player_died() -> void:
 
 func _quit_game() -> void:
 	get_tree().quit()
+
+
+func _refresh_combat_debug_draw() -> void:
+	if is_instance_valid(player) and player.has_method("refresh_combat_debug_draw"):
+		player.refresh_combat_debug_draw()
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy is Node2D:
+			(enemy as Node2D).queue_redraw()

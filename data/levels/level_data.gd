@@ -33,6 +33,7 @@ static func get_levels() -> Array[Dictionary]:
 				Rect2i(6, 21, 4, 4)
 			],
 			"enemies": [
+				{"type": "strawman", "position": Vector2i(6, 27)},
 				{"type": "zombie", "position": Vector2i(14, 23)},
 				{"type": "zombie", "position": Vector2i(23, 13)}
 			]
