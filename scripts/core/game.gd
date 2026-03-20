@@ -2,6 +2,7 @@ extends Node2D
 
 const LevelData := preload("res://data/levels/level_data.gd")
 const LevelScene := preload("res://scenes/levels/Level.tscn")
+const GameCamera := preload("res://scripts/core/game_camera.gd")
 
 var levels: Array[Dictionary] = []
 var current_level_index: int = 0
@@ -11,10 +12,12 @@ var run_state: String = "playing"
 @onready var level_container: Node2D = $LevelContainer
 @onready var player: CharacterBody2D = $Player
 @onready var camera_rig: Node2D = $CameraRig
+@onready var camera: GameCamera = $CameraRig/Camera2D
 @onready var ui: CanvasLayer = $UI
 
 
 func _ready() -> void:
+	camera.apply_defaults()
 	levels = LevelData.get_levels()
 	player.hp_changed.connect(_on_player_hp_changed)
 	player.weapon_changed.connect(_on_player_weapon_changed)

@@ -69,6 +69,7 @@ func _draw() -> void:
 		var tip_logic: Vector2 = position + facing * float(weapon["range"])
 		var tip: Vector2 = IsoMapper.logic_to_screen(tip_logic, render_origin) - position
 		draw_line(base, tip, weapon["color"], 4.0)
+		_draw_attack_sweep(base, weapon)
 
 
 func reset_for_new_run() -> void:
@@ -168,16 +169,56 @@ func _handle_attack() -> void:
 	for body in attack_area.get_overlapping_bodies():
 		if body == self:
 			continue
-		if body.has_method("take_damage"):
-			body.take_damage(weapon["damage"])
+		if not body.has_method("take_damage"):
+			continue
+		if not _is_body_inside_swing(body, weapon):
+			continue
+		body.take_damage(weapon["damage"])
 
 
 func _update_attack_area() -> void:
 	var weapon: Dictionary = get_current_weapon()
-	var shape := attack_shape.shape as RectangleShape2D
-	shape.size = Vector2(weapon["range"], 22.0)
-	attack_area.rotation = facing.angle()
-	attack_area.position = facing * (weapon["range"] * 0.5 + 10.0)
+	var shape := attack_shape.shape as CircleShape2D
+	shape.radius = float(weapon.get("hit_radius", weapon["range"]))
+	attack_area.rotation = 0.0
+	attack_area.position = Vector2.ZERO
+
+
+func _is_body_inside_swing(body: Node2D, weapon: Dictionary) -> bool:
+	var to_body: Vector2 = body.global_position - global_position
+	var distance: float = to_body.length()
+	if distance <= 0.001:
+		return true
+
+	var hit_radius: float = float(weapon.get("hit_radius", weapon["range"])) + _get_target_hit_padding(body)
+	if distance > hit_radius:
+		return false
+
+	var half_angle: float = deg_to_rad(float(weapon.get("swing_angle_degrees", 90.0)) * 0.5)
+	var facing_direction := facing.normalized()
+	var target_direction := to_body / distance
+	var angle_to_target: float = abs(facing_direction.angle_to(target_direction))
+	return angle_to_target <= half_angle
+
+
+func _get_target_hit_padding(body: Node2D) -> float:
+	for child in body.get_children():
+		if child is CollisionShape2D:
+			var shape: Shape2D = child.shape
+			if shape is CircleShape2D:
+				return (shape as CircleShape2D).radius
+	return 10.0
+
+
+func _draw_attack_sweep(base: Vector2, weapon: Dictionary) -> void:
+	var hit_radius: float = float(weapon.get("hit_radius", weapon["range"]))
+	var half_angle: float = deg_to_rad(float(weapon.get("swing_angle_degrees", 90.0)) * 0.5)
+	var left_edge := facing.rotated(-half_angle) * hit_radius
+	var right_edge := facing.rotated(half_angle) * hit_radius
+	var left_screen: Vector2 = IsoMapper.logic_to_screen(position + left_edge, render_origin) - position
+	var right_screen: Vector2 = IsoMapper.logic_to_screen(position + right_edge, render_origin) - position
+	draw_line(base, left_screen, weapon["color"].lightened(0.2), 2.0)
+	draw_line(base, right_screen, weapon["color"].lightened(0.2), 2.0)
 
 
 func _get_render_offset() -> Vector2:
