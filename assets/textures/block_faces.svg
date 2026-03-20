@@ -1,81 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="96" viewBox="0 0 128 96">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="96" viewBox="0 0 128 96" shape-rendering="crispEdges">
   <defs>
-    <filter id="softNoise" x="-5%" y="-5%" width="110%" height="110%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="2" result="noise"/>
-      <feColorMatrix in="noise" type="saturate" values="0"/>
-      <feComponentTransfer>
-        <feFuncA type="table" tableValues="0 0.12"/>
-      </feComponentTransfer>
-    </filter>
+    <style>
+      .outline { stroke-width: 1; stroke-linejoin: miter; stroke-linecap: square; }
+      .detail { fill: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; opacity: 0.45; }
+      .grain { fill: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; opacity: 0.32; }
+    </style>
   </defs>
 
-  <!-- Grass -->
-  <g transform="translate(0,0)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#81c843" stroke="#5c9d33" stroke-width="1"/>
-    <path d="M11 15 L20 10 L27 15 L37 8 L46 13 L54 11 L59 16 L51 19 L43 15 L35 19 L28 15 L20 18 Z" fill="#9de04f" opacity="0.7"/>
-    <path d="M8 20 L15 18 L22 22 L32 19 L40 23 L49 18 L56 21" fill="none" stroke="#67a939" stroke-width="2" stroke-linecap="round"/>
-  </g>
-  <g transform="translate(64,0)">
-    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#9f6438" stroke="#754120" stroke-width="1"/>
-    <path d="M0 8 L7 10 L12 8 L18 12 L24 8 L31 10" fill="none" stroke="#60a832" stroke-width="2"/>
-    <path d="M4 13 C8 11,12 16,15 14 S23 16,28 13" fill="none" stroke="#7b4526" stroke-width="2" stroke-linecap="round"/>
-    <path d="M3 21 C9 19,12 24,17 22 S24 25,28 21" fill="none" stroke="#844b2b" stroke-width="2" stroke-linecap="round"/>
-  </g>
-  <g transform="translate(96,0)">
-    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#7f4c2b" stroke="#613417" stroke-width="1"/>
-    <path d="M1 8 L8 10 L15 8 L21 11 L27 8 L31 10" fill="none" stroke="#6db03c" stroke-width="2"/>
-    <path d="M4 14 C8 12,13 17,17 15 S24 18,28 14" fill="none" stroke="#6f3f22" stroke-width="2" stroke-linecap="round"/>
-    <path d="M3 23 C10 20,13 26,18 23 S25 26,29 22" fill="none" stroke="#744327" stroke-width="2" stroke-linecap="round"/>
+  <!-- Row 1: Grass -->
+  <g id="grass_top" transform="translate(0,0)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#7dc643" stroke="#4d7f28"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#9be053" opacity="0.55"/>
+    <path class="detail" d="M16 16 L32 8 L48 16 L32 24 Z" stroke="#5e9833"/>
+    <path class="grain" d="M10 16 L22 11 L32 15 L42 11 L54 16" stroke="#5a8f31"/>
+    <path class="grain" d="M18 20 L32 14 L46 20" stroke="#5a8f31"/>
   </g>
 
-  <!-- Stone -->
-  <g transform="translate(0,32)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#b9c0c8" stroke="#7e8690" stroke-width="1"/>
-    <g fill="#d8dde3" stroke="#8b929b" stroke-width="1">
-      <polygon points="15,11 22,7 28,10 25,15 18,16"/>
-      <polygon points="31,7 39,5 46,10 42,14 33,13"/>
-      <polygon points="21,19 28,16 35,19 31,25 22,24"/>
-      <polygon points="41,17 48,15 55,19 51,24 43,23"/>
-    </g>
-  </g>
-  <g transform="translate(64,32)">
-    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#7e8791" stroke="#59606b" stroke-width="1"/>
-    <g fill="#b6bdc5" stroke="#6a727c" stroke-width="1">
-      <polygon points="3,10 9,8 14,12 10,17 3,15"/>
-      <polygon points="15,12 22,10 27,14 23,20 16,18"/>
-      <polygon points="6,20 12,18 17,22 13,27 6,25"/>
-      <polygon points="18,22 25,19 29,23 25,29 18,27"/>
-    </g>
-  </g>
-  <g transform="translate(96,32)">
-    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#656d77" stroke="#4b5158" stroke-width="1"/>
-    <g fill="#aab1ba" stroke="#5b626b" stroke-width="1">
-      <polygon points="4,10 10,7 15,11 10,16 4,14"/>
-      <polygon points="17,9 23,7 28,11 24,17 17,15"/>
-      <polygon points="3,21 10,18 15,22 10,28 3,25"/>
-      <polygon points="17,20 24,17 29,22 24,29 16,26"/>
-    </g>
+  <g id="grass_left" transform="translate(64,0)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#9f6438" stroke="#6d4324"/>
+    <path class="detail" d="M1 5 L31 20" stroke="#6fb23a"/>
+    <path class="grain" d="M6 11 C10 9,14 13,18 11 S26 13,29 11" stroke="#734827"/>
+    <path class="grain" d="M5 20 C10 18,15 22,20 20 S27 22,30 20" stroke="#7a4d2a"/>
   </g>
 
-  <!-- Wood -->
-  <g transform="translate(0,64)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#a96a38" stroke="#6d4324" stroke-width="1"/>
-    <path d="M11 12 L54 12" stroke="#814d29" stroke-width="2" stroke-linecap="round"/>
-    <path d="M7 18 C15 15,22 20,31 17 S47 20,57 17" stroke="#7a4826" stroke-width="2" fill="none" stroke-linecap="round"/>
-    <path d="M14 24 L48 24" stroke="#8f5a2f" stroke-width="2" stroke-linecap="round"/>
+  <g id="grass_right" transform="translate(96,0)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#7f4c2b" stroke="#593316"/>
+    <path class="detail" d="M1 20 L31 5" stroke="#6fb23a"/>
+    <path class="grain" d="M4 12 C8 10,13 14,17 12 S24 14,28 12" stroke="#6b3f22"/>
+    <path class="grain" d="M4 23 C9 20,14 25,19 22 S26 24,29 22" stroke="#734527"/>
   </g>
-  <g transform="translate(64,64)">
-    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#90552c" stroke="#643719" stroke-width="1"/>
-    <path d="M6 4 L6 26" stroke="#744221" stroke-width="2" stroke-linecap="round"/>
-    <path d="M14 7 L14 28" stroke="#6f3f20" stroke-width="2" stroke-linecap="round"/>
-    <path d="M22 8 L22 30" stroke="#6a3d1f" stroke-width="2" stroke-linecap="round"/>
-    <path d="M27 9 L27 30" stroke="#7d4b28" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Row 2: Stone -->
+  <g id="stone_top" transform="translate(0,32)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#b5bdc7" stroke="#6f7781"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#d5dbe2" opacity="0.45"/>
+    <path class="detail" d="M13 16 L22 10 L31 14 L23 20 Z" stroke="#8a9199"/>
+    <path class="detail" d="M33 14 L42 9 L52 14 L43 19 Z" stroke="#8a9199"/>
+    <path class="detail" d="M24 22 L32 17 L41 22 L33 27 Z" stroke="#8a9199"/>
   </g>
-  <g transform="translate(96,64)">
-    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#7a4826" stroke="#542d13" stroke-width="1"/>
-    <path d="M5 8 L5 28" stroke="#63381b" stroke-width="2" stroke-linecap="round"/>
-    <path d="M13 5 L13 29" stroke="#5d3419" stroke-width="2" stroke-linecap="round"/>
-    <path d="M20 7 L20 30" stroke="#694022" stroke-width="2" stroke-linecap="round"/>
-    <path d="M27 9 L27 28" stroke="#5a3117" stroke-width="2" stroke-linecap="round"/>
+
+  <g id="stone_left" transform="translate(64,32)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#7e8791" stroke="#58606a"/>
+    <path class="detail" d="M4 7 L16 13 L16 22 L4 16 Z" stroke="#a8b0b8"/>
+    <path class="detail" d="M17 14 L28 19 L28 28 L17 23 Z" stroke="#a8b0b8"/>
+    <path class="grain" d="M1 16 L31 16" stroke="#68717c"/>
+  </g>
+
+  <g id="stone_right" transform="translate(96,32)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#656d77" stroke="#474d54"/>
+    <path class="detail" d="M4 19 L15 14 L15 23 L4 28 Z" stroke="#a5adb6"/>
+    <path class="detail" d="M16 12 L28 6 L28 15 L16 21 Z" stroke="#a5adb6"/>
+    <path class="grain" d="M1 16 L31 16" stroke="#565d66"/>
+  </g>
+
+  <!-- Row 3: Wood -->
+  <g id="wood_top" transform="translate(0,64)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#a76a38" stroke="#6d4324"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#c17f45" opacity="0.35"/>
+    <path class="detail" d="M10 16 L54 16" stroke="#7c4a28"/>
+    <path class="grain" d="M15 10 L49 10" stroke="#89542d"/>
+    <path class="grain" d="M15 22 L49 22" stroke="#925b30"/>
+  </g>
+
+  <g id="wood_left" transform="translate(64,64)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#90552c" stroke="#643719"/>
+    <path class="detail" d="M7 4 L7 19" stroke="#734321"/>
+    <path class="detail" d="M15 8 L15 23" stroke="#6e401f"/>
+    <path class="detail" d="M23 12 L23 27" stroke="#7d4b28"/>
+  </g>
+
+  <g id="wood_right" transform="translate(96,64)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#7a4826" stroke="#542d13"/>
+    <path class="detail" d="M8 12 L8 27" stroke="#60361b"/>
+    <path class="detail" d="M16 8 L16 23" stroke="#5a3218"/>
+    <path class="detail" d="M24 4 L24 19" stroke="#694022"/>
   </g>
 </svg>
