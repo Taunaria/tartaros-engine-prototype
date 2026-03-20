@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/visual/block_render_test.gd" id="1"]
+
+[node name="BlockRenderTest" type="Node2D"]
+script = ExtResource("1")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 1024.0
+offset_bottom = 768.0
+color = Color(0.95, 0.96, 0.98, 1)
+
+[node name="Title" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 20.0
+offset_right = 520.0
+offset_bottom = 54.0
+theme_override_font_sizes/font_size = 24
+text = "Pseudo-3D Block Render Test"
+
+[node name="Subtitle" type="Label" parent="."]
+offset_left = 24.0
+offset_top = 54.0
+offset_right = 620.0
+offset_bottom = 86.0
+text = "10x10 grid, 3 materials, isometric placement, z-sorted cubes"
+
+[node name="TilesRoot" type="Node2D" parent="."]
+
+[node name="EntitiesRoot" type="Node2D" parent="."]
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(512, 384)
+enabled = true

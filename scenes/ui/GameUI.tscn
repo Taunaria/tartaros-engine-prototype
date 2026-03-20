@@ -1,0 +1,134 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/game_ui.gd" id="1"]
+
+[node name="UI" type="CanvasLayer"]
+script = ExtResource("1")
+
+[node name="HUD" type="MarginContainer" parent="."]
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 280.0
+offset_bottom = 140.0
+
+[node name="Panel" type="Panel" parent="HUD"]
+offset_right = 240.0
+offset_bottom = 112.0
+
+[node name="MarginContainer" type="MarginContainer" parent="HUD/Panel"]
+offset_left = 10.0
+offset_top = 10.0
+offset_right = 230.0
+offset_bottom = 102.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HUD/Panel/MarginContainer"]
+offset_right = 220.0
+offset_bottom = 92.0
+theme_override_constants/separation = 6
+
+[node name="HPBar" type="ProgressBar" parent="HUD/Panel/MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(210, 20)
+show_percentage = false
+
+[node name="HPLabel" type="Label" parent="HUD/Panel/MarginContainer/VBoxContainer"]
+text = "HP 12 / 12"
+
+[node name="WeaponLabel" type="Label" parent="HUD/Panel/MarginContainer/VBoxContainer"]
+text = "Waffe: Knueppel"
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = 20.0
+offset_top = 670.0
+offset_right = 420.0
+offset_bottom = 706.0
+horizontal_alignment = 1
+text = ""
+
+[node name="MessageLabel" type="Label" parent="."]
+offset_left = 520.0
+offset_top = 18.0
+offset_right = 760.0
+offset_bottom = 48.0
+horizontal_alignment = 1
+text = ""
+
+[node name="LevelTitle" type="Label" parent="."]
+offset_left = 410.0
+offset_top = 42.0
+offset_right = 870.0
+offset_bottom = 88.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+text = "Level"
+
+[node name="DeathScreen" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="Panel" type="Panel" parent="DeathScreen"]
+custom_minimum_size = Vector2(300, 180)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="DeathScreen/Panel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -110.0
+offset_top = -64.0
+offset_right = 110.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="DeathScreen/Panel/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+text = "Du bist gefallen"
+
+[node name="RestartButton" type="Button" parent="DeathScreen/Panel/VBoxContainer"]
+text = "Neu starten"
+
+[node name="QuitButton" type="Button" parent="DeathScreen/Panel/VBoxContainer"]
+text = "Beenden"
+
+[node name="VictoryScreen" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+
+[node name="Panel" type="Panel" parent="VictoryScreen"]
+custom_minimum_size = Vector2(320, 180)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VictoryScreen/Panel"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -64.0
+offset_right = 120.0
+offset_bottom = 64.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VictoryScreen/Panel/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+text = "Demo abgeschlossen"
+
+[node name="RestartButton" type="Button" parent="VictoryScreen/Panel/VBoxContainer"]
+text = "Neu starten"
+
+[node name="QuitButton" type="Button" parent="VictoryScreen/Panel/VBoxContainer"]
+text = "Beenden"

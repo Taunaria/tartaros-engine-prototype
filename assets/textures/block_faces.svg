@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="96" viewBox="0 0 128 96">
+  <defs>
+    <filter id="softNoise" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="2" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.12"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+
+  <!-- Grass -->
+  <g transform="translate(0,0)">
+    <polygon points="32,1 63,16 32,31 1,16" fill="#81c843" stroke="#5c9d33" stroke-width="1"/>
+    <path d="M11 15 L20 10 L27 15 L37 8 L46 13 L54 11 L59 16 L51 19 L43 15 L35 19 L28 15 L20 18 Z" fill="#9de04f" opacity="0.7"/>
+    <path d="M8 20 L15 18 L22 22 L32 19 L40 23 L49 18 L56 21" fill="none" stroke="#67a939" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(64,0)">
+    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#9f6438" stroke="#754120" stroke-width="1"/>
+    <path d="M0 8 L7 10 L12 8 L18 12 L24 8 L31 10" fill="none" stroke="#60a832" stroke-width="2"/>
+    <path d="M4 13 C8 11,12 16,15 14 S23 16,28 13" fill="none" stroke="#7b4526" stroke-width="2" stroke-linecap="round"/>
+    <path d="M3 21 C9 19,12 24,17 22 S24 25,28 21" fill="none" stroke="#844b2b" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(96,0)">
+    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#7f4c2b" stroke="#613417" stroke-width="1"/>
+    <path d="M1 8 L8 10 L15 8 L21 11 L27 8 L31 10" fill="none" stroke="#6db03c" stroke-width="2"/>
+    <path d="M4 14 C8 12,13 17,17 15 S24 18,28 14" fill="none" stroke="#6f3f22" stroke-width="2" stroke-linecap="round"/>
+    <path d="M3 23 C10 20,13 26,18 23 S25 26,29 22" fill="none" stroke="#744327" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <!-- Stone -->
+  <g transform="translate(0,32)">
+    <polygon points="32,1 63,16 32,31 1,16" fill="#b9c0c8" stroke="#7e8690" stroke-width="1"/>
+    <g fill="#d8dde3" stroke="#8b929b" stroke-width="1">
+      <polygon points="15,11 22,7 28,10 25,15 18,16"/>
+      <polygon points="31,7 39,5 46,10 42,14 33,13"/>
+      <polygon points="21,19 28,16 35,19 31,25 22,24"/>
+      <polygon points="41,17 48,15 55,19 51,24 43,23"/>
+    </g>
+  </g>
+  <g transform="translate(64,32)">
+    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#7e8791" stroke="#59606b" stroke-width="1"/>
+    <g fill="#b6bdc5" stroke="#6a727c" stroke-width="1">
+      <polygon points="3,10 9,8 14,12 10,17 3,15"/>
+      <polygon points="15,12 22,10 27,14 23,20 16,18"/>
+      <polygon points="6,20 12,18 17,22 13,27 6,25"/>
+      <polygon points="18,22 25,19 29,23 25,29 18,27"/>
+    </g>
+  </g>
+  <g transform="translate(96,32)">
+    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#656d77" stroke="#4b5158" stroke-width="1"/>
+    <g fill="#aab1ba" stroke="#5b626b" stroke-width="1">
+      <polygon points="4,10 10,7 15,11 10,16 4,14"/>
+      <polygon points="17,9 23,7 28,11 24,17 17,15"/>
+      <polygon points="3,21 10,18 15,22 10,28 3,25"/>
+      <polygon points="17,20 24,17 29,22 24,29 16,26"/>
+    </g>
+  </g>
+
+  <!-- Wood -->
+  <g transform="translate(0,64)">
+    <polygon points="32,1 63,16 32,31 1,16" fill="#a96a38" stroke="#6d4324" stroke-width="1"/>
+    <path d="M11 12 L54 12" stroke="#814d29" stroke-width="2" stroke-linecap="round"/>
+    <path d="M7 18 C15 15,22 20,31 17 S47 20,57 17" stroke="#7a4826" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M14 24 L48 24" stroke="#8f5a2f" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(64,64)">
+    <polygon points="16,0 31,8 31,31 0,24 0,8" fill="#90552c" stroke="#643719" stroke-width="1"/>
+    <path d="M6 4 L6 26" stroke="#744221" stroke-width="2" stroke-linecap="round"/>
+    <path d="M14 7 L14 28" stroke="#6f3f20" stroke-width="2" stroke-linecap="round"/>
+    <path d="M22 8 L22 30" stroke="#6a3d1f" stroke-width="2" stroke-linecap="round"/>
+    <path d="M27 9 L27 30" stroke="#7d4b28" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g transform="translate(96,64)">
+    <polygon points="1,8 16,0 31,8 31,24 0,31 0,8" fill="#7a4826" stroke="#542d13" stroke-width="1"/>
+    <path d="M5 8 L5 28" stroke="#63381b" stroke-width="2" stroke-linecap="round"/>
+    <path d="M13 5 L13 29" stroke="#5d3419" stroke-width="2" stroke-linecap="round"/>
+    <path d="M20 7 L20 30" stroke="#694022" stroke-width="2" stroke-linecap="round"/>
+    <path d="M27 9 L27 28" stroke="#5a3117" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
