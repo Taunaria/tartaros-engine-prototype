@@ -3,18 +3,18 @@ extends SceneTree
 const BlockFaceAtlas := preload("res://scripts/visual/block_face_atlas.gd")
 const BlockTile := preload("res://scripts/visual/block_tile.gd")
 const OUTPUT_PATH := "res://tmp/block_render_test_export.png"
-const ORIGIN := Vector2i(352, 120)
+const ORIGIN := Vector2i(352, 170)
 const TEST_GRID := [
-	["grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass"],
-	["grass", "grass", "stone", "stone", "stone", "grass", "grass", "wood", "wood", "grass"],
-	["grass", "grass", "stone", "grass", "grass", "grass", "grass", "wood", "wood", "grass"],
-	["grass", "grass", "stone", "grass", "wood", "wood", "grass", "grass", "grass", "grass"],
-	["grass", "grass", "grass", "grass", "wood", "wood", "grass", "stone", "stone", "grass"],
-	["grass", "wood", "wood", "grass", "grass", "grass", "grass", "stone", "grass", "grass"],
-	["grass", "wood", "wood", "grass", "stone", "stone", "grass", "grass", "grass", "grass"],
-	["grass", "grass", "grass", "grass", "stone", "grass", "grass", "wood", "wood", "grass"],
-	["grass", "stone", "stone", "grass", "grass", "grass", "grass", "wood", "grass", "grass"],
-	["grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass", "grass"]
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "wood", "height": 1}, {"type": "wood", "height": 1}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "wood", "height": 2}, {"type": "wood", "height": 2}, {"type": "wood", "height": 2}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "wood", "height": 0}, {"type": "wood", "height": 0}, {"type": "wood", "height": 2}, {"type": "grass", "height": 0}, {"type": "wood", "height": 2}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "wood", "height": 0}, {"type": "wood", "height": 0}, {"type": "wood", "height": 2}, {"type": "grass", "height": 0}, {"type": "wood", "height": 2}, {"type": "stone", "height": 2}],
+	[{"type": "grass", "height": 0}, {"type": "wood", "height": 1}, {"type": "wood", "height": 1}, {"type": "wood", "height": 1}, {"type": "wood", "height": 0}, {"type": "wood", "height": 0}, {"type": "wood", "height": 2}, {"type": "wood", "height": 2}, {"type": "wood", "height": 2}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "wood", "height": 0}, {"type": "wood", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "stone", "height": 1}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}],
+	[{"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}, {"type": "grass", "height": 0}]
 ]
 
 
@@ -27,10 +27,12 @@ func _initialize() -> void:
 	var draw_list: Array[Dictionary] = []
 	for y in range(TEST_GRID.size()):
 		for x in range(TEST_GRID[y].size()):
+			var tile_data: Dictionary = TEST_GRID[y][x]
 			draw_list.append({
-				"type": TEST_GRID[y][x],
+				"type": tile_data["type"],
+				"height": tile_data["height"],
 				"grid": Vector2i(x, y),
-				"sort": x + y
+				"sort": (x + y) * 10 + tile_data["height"] * 3
 			})
 
 	draw_list.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
@@ -38,22 +40,30 @@ func _initialize() -> void:
 	)
 
 	for entry in draw_list:
-		_draw_block(output, atlas_image, entry["type"], entry["grid"])
+		_draw_block(output, atlas_image, _resolve_tile_type(entry["type"]), entry["grid"], entry["height"])
 
-	_draw_marker(output, Vector2i(4, 4), Color8(204, 82, 82))
-	_draw_marker(output, Vector2i(7, 2), Color8(86, 145, 102))
+	_draw_marker(output, Vector2i(4, 6), Color8(204, 82, 82))
+	_draw_marker(output, Vector2i(8, 4), Color8(86, 145, 102))
 	output.save_png(ProjectSettings.globalize_path(OUTPUT_PATH))
 	quit()
 
 
-func _draw_block(output: Image, atlas_image: Image, tile_type: String, grid: Vector2i) -> void:
+func _draw_block(output: Image, atlas_image: Image, tile_type: String, grid: Vector2i, visual_height: int) -> void:
 	var regions: Dictionary = BlockFaceAtlas.get_regions()[tile_type]
 	var screen: Vector2 = BlockTile.grid_to_screen(grid)
 	var screen_origin := Vector2i(roundi(screen.x), roundi(screen.y)) + ORIGIN
+	var height_step := int(BlockTile.get_default_height_step())
 
-	_blit_region(output, atlas_image, regions["left_texture_region"], screen_origin + Vector2i(-32, 0))
-	_blit_region(output, atlas_image, regions["right_texture_region"], screen_origin + Vector2i(0, 0))
-	_blit_region(output, atlas_image, regions["top_texture_region"], screen_origin + Vector2i(-32, -16))
+	if visual_height <= 0:
+		_blit_region(output, atlas_image, regions["top_texture_region"], screen_origin + Vector2i(-32, -16))
+		return
+
+	for layer in range(visual_height):
+		var offset := Vector2i(0, -height_step * (layer + 1))
+		_blit_region(output, atlas_image, regions["left_texture_region"], screen_origin + offset + Vector2i(-32, 0))
+		_blit_region(output, atlas_image, regions["right_texture_region"], screen_origin + offset + Vector2i(0, 0))
+
+	_blit_region(output, atlas_image, regions["top_texture_region"], screen_origin + Vector2i(-32, -16 - height_step * visual_height))
 
 
 func _blit_region(output: Image, atlas_image: Image, region: Rect2, destination: Vector2i) -> void:
@@ -85,3 +95,9 @@ func _fill_rect(output: Image, rect: Rect2i, color: Color) -> void:
 			if x < 0 or y < 0 or x >= output.get_width() or y >= output.get_height():
 				continue
 			output.set_pixel(x, y, color)
+
+
+func _resolve_tile_type(tile_type: String) -> String:
+	if tile_type == "dirt":
+		return "wood"
+	return tile_type

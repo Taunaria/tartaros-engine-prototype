@@ -7,6 +7,8 @@ const DATA := {
 		"name": "Knueppel",
 		"damage": 2,
 		"range": 30.0,
+		"hit_radius": 38.0,
+		"swing_angle_degrees": 110.0,
 		"cooldown": 0.45,
 		"color": Color8(137, 92, 56)
 	},
@@ -15,6 +17,8 @@ const DATA := {
 		"name": "Schwert",
 		"damage": 3,
 		"range": 38.0,
+		"hit_radius": 46.0,
+		"swing_angle_degrees": 90.0,
 		"cooldown": 0.38,
 		"color": Color8(183, 192, 203)
 	},
@@ -23,6 +27,8 @@ const DATA := {
 		"name": "Axt",
 		"damage": 4,
 		"range": 34.0,
+		"hit_radius": 42.0,
+		"swing_angle_degrees": 120.0,
 		"cooldown": 0.55,
 		"color": Color8(169, 185, 150)
 	}
