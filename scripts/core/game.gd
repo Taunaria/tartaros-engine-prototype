@@ -3,17 +3,22 @@ extends Node2D
 const LevelData := preload("res://data/levels/level_data.gd")
 const LevelScene := preload("res://scenes/levels/Level.tscn")
 const GameCamera := preload("res://scripts/core/game_camera.gd")
+const LevelMusicTheme := preload("res://scripts/audio/level_music_theme.gd")
+
+@export var level_music_themes: Array[LevelMusicTheme] = []
 
 var levels: Array[Dictionary] = []
 var current_level_index: int = 0
 var current_level: Node = null
 var run_state: String = "playing"
+var combat_music_active: bool = false
 
 @onready var level_container: Node2D = $LevelContainer
 @onready var player: CharacterBody2D = $Player
 @onready var camera_rig: Node2D = $CameraRig
 @onready var camera: GameCamera = $CameraRig/Camera2D
 @onready var ui: CanvasLayer = $UI
+@onready var sound_theme_manager: SoundThemeManager = $SoundThemeManager
 
 
 func _ready() -> void:
@@ -38,6 +43,7 @@ func start_new_run() -> void:
 	player.set_control_enabled(true)
 	ui.hide_overlays()
 	current_level_index = 0
+	set_combat_music_active(false)
 	_load_level(current_level_index)
 	_on_player_hp_changed(player.hp, player.max_hp)
 	_on_player_weapon_changed(player.get_current_weapon())
@@ -84,12 +90,16 @@ func complete_demo() -> void:
 	player.set_control_enabled(false)
 	if current_level != null and current_level.has_method("set_active"):
 		current_level.set_active(false)
+	set_combat_music_active(false)
 	ui.show_victory_screen()
 
 
 func _load_level(level_index: int) -> void:
 	if current_level != null:
 		current_level.queue_free()
+
+	set_combat_music_active(false)
+	_apply_level_music_for(levels[level_index].get("id", ""))
 
 	current_level = LevelScene.instantiate()
 	level_container.add_child(current_level)
@@ -101,6 +111,45 @@ func _load_level(level_index: int) -> void:
 	player.set_control_enabled(true)
 	ui.show_level_title_text(levels[level_index].get("name", ""))
 	show_interaction_hint("")
+
+
+func set_level_music(level_theme: AudioStream, action_theme: AudioStream) -> void:
+	if sound_theme_manager == null:
+		return
+	sound_theme_manager.set_level_themes(level_theme, action_theme)
+	if combat_music_active:
+		sound_theme_manager.enter_action_state()
+	else:
+		sound_theme_manager.exit_action_state()
+
+
+func set_combat_music_active(active: bool) -> void:
+	combat_music_active = active
+	if sound_theme_manager == null:
+		return
+	if combat_music_active:
+		sound_theme_manager.enter_action_state()
+	else:
+		sound_theme_manager.exit_action_state()
+
+
+func _apply_level_music_for(level_id: String) -> void:
+	var level_theme: AudioStream = null
+	var action_theme: AudioStream = null
+	var music_theme: LevelMusicTheme = _find_level_music_theme(level_id)
+	if music_theme != null and music_theme.enabled:
+		level_theme = music_theme.level_theme
+		action_theme = music_theme.action_theme
+	set_level_music(level_theme, action_theme)
+
+
+func _find_level_music_theme(level_id: String) -> LevelMusicTheme:
+	for music_theme in level_music_themes:
+		if music_theme == null:
+			continue
+		if String(music_theme.level_id) == level_id:
+			return music_theme
+	return null
 
 
 func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
@@ -116,6 +165,7 @@ func _on_player_died() -> void:
 	player.set_control_enabled(false)
 	if current_level != null and current_level.has_method("set_active"):
 		current_level.set_active(false)
+	set_combat_music_active(false)
 	ui.show_death_screen()
 
 
