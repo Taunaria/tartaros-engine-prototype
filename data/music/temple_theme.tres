@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LevelMusicTheme" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/audio/level_music_theme.gd" id="1"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/temple.ogg" id="2"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/action.ogg" id="3"]
+
+[resource]
+script = ExtResource("1")
+level_id = &"temple"
+enabled = true
+level_theme = ExtResource("2")
+action_theme = ExtResource("3")

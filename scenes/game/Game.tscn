@@ -1,13 +1,20 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/core/game.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GameUI.tscn" id="3"]
 [ext_resource type="Script" path="res://scripts/core/game_camera.gd" id="4"]
 [ext_resource type="Script" path="res://scripts/audio/sound_theme_manager.gd" id="5"]
+[ext_resource type="Resource" path="res://data/music/village_theme.tres" id="6"]
+[ext_resource type="Resource" path="res://data/music/forest_theme.tres" id="7"]
+[ext_resource type="Resource" path="res://data/music/cave_theme.tres" id="8"]
+[ext_resource type="Resource" path="res://data/music/prison_theme.tres" id="9"]
+[ext_resource type="Resource" path="res://data/music/temple_theme.tres" id="10"]
+[ext_resource type="Resource" path="res://data/music/abyss_theme.tres" id="11"]
 
 [node name="Game" type="Node2D"]
 script = ExtResource("1")
+level_music_themes = [ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")]
 
 [node name="LevelContainer" type="Node2D" parent="."]
 
