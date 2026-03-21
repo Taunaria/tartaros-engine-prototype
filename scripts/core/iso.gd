@@ -6,8 +6,8 @@ const RENDER_TILE_WIDTH := 64.0
 const RENDER_TILE_HEIGHT := 32.0
 const HALF_RENDER_TILE_WIDTH := RENDER_TILE_WIDTH * 0.5
 const HALF_RENDER_TILE_HEIGHT := RENDER_TILE_HEIGHT * 0.5
-const SORT_LAYER_STEP := 10
-const ENTITY_SORT_OFFSET := 6
+const SORT_LAYER_STEP := 40
+const ENTITY_SORT_OFFSET := 20
 
 
 static func tile_to_logic_center(tile: Vector2i) -> Vector2:

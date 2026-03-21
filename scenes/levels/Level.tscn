@@ -11,7 +11,7 @@ z_index = 0
 
 [node name="StructureTopLayer" type="Node2D" parent="." unique_id=17740256048]
 z_as_relative = false
-z_index = 500
+z_index = 1000
 
 [node name="Collision" type="Node2D" parent="." unique_id=536047426]
 
@@ -21,4 +21,4 @@ z_index = 500
 
 [node name="OcclusionLayer" type="Node2D" parent="." unique_id=573846924]
 z_as_relative = false
-z_index = 1000
+z_index = 1030
