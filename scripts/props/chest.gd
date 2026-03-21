@@ -21,7 +21,7 @@ func set_active(_active: bool) -> void:
 
 func set_render_origin(new_render_origin: Vector2) -> void:
 	render_origin = new_render_origin
-	z_index = 1200 + IsoMapper.sort_key_for_logic(global_position)
+	z_index = 1000 + IsoMapper.entity_sort_z_for_foot(global_position) + 1
 	queue_redraw()
 
 

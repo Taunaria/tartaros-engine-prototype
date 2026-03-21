@@ -26,6 +26,8 @@ func _ready() -> void:
 	music_b.bus = "Master"
 	music_a.volume_db = SILENT_DB
 	music_b.volume_db = SILENT_DB
+	music_a.finished.connect(_on_music_player_finished.bind(music_a))
+	music_b.finished.connect(_on_music_player_finished.bind(music_b))
 	calm_timer.wait_time = calm_timeout
 	calm_timer.one_shot = true
 
@@ -165,3 +167,13 @@ func _on_calm_timer_timeout() -> void:
 		return
 	_in_action_state = false
 	_apply_target_theme()
+
+
+func _on_music_player_finished(player: AudioStreamPlayer) -> void:
+	if not music_enabled:
+		return
+	if player != _active_player:
+		return
+	if player.stream == null:
+		return
+	player.play()
