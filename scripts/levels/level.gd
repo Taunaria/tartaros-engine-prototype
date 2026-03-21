@@ -15,33 +15,33 @@ const WALL_HEIGHT := 2
 const THEMES := {
 	"village": {
 		"floor_tile": "grass",
-		"accent_tile": "wood",
-		"wall_tile": "wood"
+		"accent_tile": "dirt",
+		"wall_tile": "light_stone"
 	},
 	"forest": {
 		"floor_tile": "grass",
-		"accent_tile": "wood",
-		"wall_tile": "wood"
+		"accent_tile": "dirt",
+		"wall_tile": "foliage"
 	},
 	"cave": {
-		"floor_tile": "stone",
-		"accent_tile": "stone",
-		"wall_tile": "stone"
+		"floor_tile": "dark_stone",
+		"accent_tile": "dirt",
+		"wall_tile": "dark_stone"
 	},
 	"prison": {
-		"floor_tile": "stone",
-		"accent_tile": "wood",
-		"wall_tile": "stone"
+		"floor_tile": "dark_stone",
+		"accent_tile": "light_stone",
+		"wall_tile": "light_stone"
 	},
 	"temple": {
-		"floor_tile": "stone",
-		"accent_tile": "wood",
-		"wall_tile": "stone"
+		"floor_tile": "temple_stone",
+		"accent_tile": "light_stone",
+		"wall_tile": "temple_stone"
 	},
 	"abyss": {
-		"floor_tile": "stone",
-		"accent_tile": "wood",
-		"wall_tile": "stone"
+		"floor_tile": "cracked",
+		"accent_tile": "lava",
+		"wall_tile": "dark_stone"
 	}
 }
 
@@ -49,6 +49,9 @@ var game: Node = null
 var level_data: Dictionary = {}
 var blocked_rects: Array = []
 var accent_rects: Array = []
+var material_rects: Array = []
+var height_one_rects: Array = []
+var height_two_rects: Array = []
 var remaining_enemies: int = 0
 var exit_portal: Area2D = null
 var active: bool = true
@@ -70,6 +73,9 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	render_origin = IsoMapper.level_render_origin(level_data.get("size", Vector2i(32, 32)))
 	blocked_rects = level_data.get("wall_rects", [])
 	accent_rects = level_data.get("accent_rects", [])
+	material_rects = level_data.get("material_rects", [])
+	height_one_rects = level_data.get("height_one_rects", [])
+	height_two_rects = level_data.get("height_two_rects", blocked_rects)
 	_clear_container(tiles_root)
 	_clear_container(collision_root)
 	_clear_container(props_root)
@@ -245,6 +251,9 @@ func _clear_container(node: Node) -> void:
 
 
 func _get_tile_type(tile: Vector2i, theme: Dictionary) -> String:
+	var override_tile: String = _get_material_override(tile)
+	if not override_tile.is_empty():
+		return override_tile
 	if _get_tile_visual_height(tile) > GROUND_HEIGHT:
 		return theme["wall_tile"]
 	if _is_in_rects(tile, accent_rects):
@@ -253,44 +262,21 @@ func _get_tile_type(tile: Vector2i, theme: Dictionary) -> String:
 
 
 func _get_tile_visual_height(tile: Vector2i) -> int:
-	if level_data.get("id", "") == "village":
-		return _get_village_visual_height(tile)
+	if _is_in_rects(tile, height_two_rects):
+		return WALL_HEIGHT
+	if _is_in_rects(tile, height_one_rects):
+		return LOW_STRUCTURE_HEIGHT
 	if _is_in_rects(tile, blocked_rects):
 		return WALL_HEIGHT
 	return GROUND_HEIGHT
 
 
-func _get_village_visual_height(tile: Vector2i) -> int:
-	if _is_in_rects(tile, _get_village_height_two_rects()):
-		return WALL_HEIGHT
-	if _is_in_rects(tile, _get_village_height_one_rects()):
-		return LOW_STRUCTURE_HEIGHT
-	return GROUND_HEIGHT
-
-
-func _get_village_height_two_rects() -> Array:
-	return [
-		Rect2i(0, 0, 32, 1),
-		Rect2i(0, 31, 32, 1),
-		Rect2i(0, 0, 1, 32),
-		Rect2i(31, 0, 1, 32),
-		Rect2i(4, 4, 8, 1), Rect2i(4, 10, 8, 1), Rect2i(4, 5, 1, 5), Rect2i(11, 5, 1, 5),
-		Rect2i(18, 5, 8, 1), Rect2i(18, 11, 8, 1), Rect2i(18, 6, 1, 5), Rect2i(25, 6, 1, 5),
-		Rect2i(13, 12, 5, 1), Rect2i(13, 14, 5, 1), Rect2i(13, 13, 1, 1), Rect2i(17, 13, 1, 1),
-		Rect2i(13, 18, 5, 1), Rect2i(13, 19, 5, 1), Rect2i(13, 19, 1, 1), Rect2i(17, 19, 1, 1),
-		Rect2i(22, 20, 4, 1), Rect2i(22, 24, 4, 1), Rect2i(22, 21, 1, 3), Rect2i(25, 21, 1, 3),
-		Rect2i(6, 21, 4, 1), Rect2i(6, 24, 4, 1), Rect2i(6, 22, 1, 2), Rect2i(9, 22, 1, 2)
-	]
-
-
-func _get_village_height_one_rects() -> Array:
-	return [
-		Rect2i(4, 20, 7, 1),
-		Rect2i(4, 21, 1, 4),
-		Rect2i(10, 21, 1, 4),
-		Rect2i(20, 19, 7, 1),
-		Rect2i(20, 20, 1, 5),
-		Rect2i(26, 20, 1, 5),
-		Rect2i(12, 16, 7, 1),
-		Rect2i(12, 20, 7, 1)
-	]
+func _get_material_override(tile: Vector2i) -> String:
+	for entry in material_rects:
+		var tile_name: String = entry.get("tile", "")
+		var rects: Array = entry.get("rects", [])
+		if tile_name.is_empty():
+			continue
+		if _is_in_rects(tile, rects):
+			return tile_name
+	return ""

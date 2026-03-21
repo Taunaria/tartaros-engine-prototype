@@ -34,7 +34,7 @@ const STATS := {
 	"strawman": {
 		"display_name": "Strohpupe",
 		"speed": 0.0,
-		"max_hp": 50,
+		"max_hp": 20,
 		"damage": 0,
 		"chase_range": 0.0,
 		"melee_range": 0.0,

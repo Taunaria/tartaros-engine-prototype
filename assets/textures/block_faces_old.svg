@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="96" viewBox="0 0 128 96" shape-rendering="crispEdges">
+  <defs>
+    <style>
+      .outline { stroke-width: 1; stroke-linejoin: miter; stroke-linecap: square; }
+      .detail { fill: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; opacity: 0.45; }
+      .grain { fill: none; stroke-width: 1; stroke-linecap: round; stroke-linejoin: round; opacity: 0.32; }
+    </style>
+  </defs>
+
+  <!-- Row 1: Grass -->
+  <g id="grass_top" transform="translate(0,0)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#7dc643" stroke="#4d7f28"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#9be053" opacity="0.55"/>
+    <path class="detail" d="M16 16 L32 8 L48 16 L32 24 Z" stroke="#5e9833"/>
+    <path class="grain" d="M10 16 L22 11 L32 15 L42 11 L54 16" stroke="#5a8f31"/>
+    <path class="grain" d="M18 20 L32 14 L46 20" stroke="#5a8f31"/>
+  </g>
+
+  <g id="grass_left" transform="translate(64,0)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#9f6438" stroke="#6d4324"/>
+    <path class="detail" d="M1 5 L31 20" stroke="#6fb23a"/>
+    <path class="grain" d="M6 11 C10 9,14 13,18 11 S26 13,29 11" stroke="#734827"/>
+    <path class="grain" d="M5 20 C10 18,15 22,20 20 S27 22,30 20" stroke="#7a4d2a"/>
+  </g>
+
+  <g id="grass_right" transform="translate(96,0)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#7f4c2b" stroke="#593316"/>
+    <path class="detail" d="M1 20 L31 5" stroke="#6fb23a"/>
+    <path class="grain" d="M4 12 C8 10,13 14,17 12 S24 14,28 12" stroke="#6b3f22"/>
+    <path class="grain" d="M4 23 C9 20,14 25,19 22 S26 24,29 22" stroke="#734527"/>
+  </g>
+
+  <!-- Row 2: Stone -->
+  <g id="stone_top" transform="translate(0,32)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#b5bdc7" stroke="#6f7781"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#d5dbe2" opacity="0.45"/>
+    <path class="detail" d="M13 16 L22 10 L31 14 L23 20 Z" stroke="#8a9199"/>
+    <path class="detail" d="M33 14 L42 9 L52 14 L43 19 Z" stroke="#8a9199"/>
+    <path class="detail" d="M24 22 L32 17 L41 22 L33 27 Z" stroke="#8a9199"/>
+  </g>
+
+  <g id="stone_left" transform="translate(64,32)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#7e8791" stroke="#58606a"/>
+    <path class="detail" d="M4 7 L16 13 L16 22 L4 16 Z" stroke="#a8b0b8"/>
+    <path class="detail" d="M17 14 L28 19 L28 28 L17 23 Z" stroke="#a8b0b8"/>
+    <path class="grain" d="M1 16 L31 16" stroke="#68717c"/>
+  </g>
+
+  <g id="stone_right" transform="translate(96,32)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#656d77" stroke="#474d54"/>
+    <path class="detail" d="M4 19 L15 14 L15 23 L4 28 Z" stroke="#a5adb6"/>
+    <path class="detail" d="M16 12 L28 6 L28 15 L16 21 Z" stroke="#a5adb6"/>
+    <path class="grain" d="M1 16 L31 16" stroke="#565d66"/>
+  </g>
+
+  <!-- Row 3: Wood -->
+  <g id="wood_top" transform="translate(0,64)">
+    <polygon class="outline" points="32,1 63,16 32,31 1,16" fill="#a76a38" stroke="#6d4324"/>
+    <polygon points="32,5 55,16 32,27 9,16" fill="#c17f45" opacity="0.35"/>
+    <path class="detail" d="M10 16 L54 16" stroke="#7c4a28"/>
+    <path class="grain" d="M15 10 L49 10" stroke="#89542d"/>
+    <path class="grain" d="M15 22 L49 22" stroke="#925b30"/>
+  </g>
+
+  <g id="wood_left" transform="translate(64,64)">
+    <polygon class="outline" points="1,1 31,16 31,31 1,16" fill="#90552c" stroke="#643719"/>
+    <path class="detail" d="M7 4 L7 19" stroke="#734321"/>
+    <path class="detail" d="M15 8 L15 23" stroke="#6e401f"/>
+    <path class="detail" d="M23 12 L23 27" stroke="#7d4b28"/>
+  </g>
+
+  <g id="wood_right" transform="translate(96,64)">
+    <polygon class="outline" points="1,16 31,1 31,16 1,31" fill="#7a4826" stroke="#542d13"/>
+    <path class="detail" d="M8 12 L8 27" stroke="#60361b"/>
+    <path class="detail" d="M16 8 L16 23" stroke="#5a3218"/>
+    <path class="detail" d="M24 4 L24 19" stroke="#694022"/>
+  </g>
+</svg>

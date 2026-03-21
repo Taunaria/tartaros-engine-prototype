@@ -1,16 +1,16 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://wgguhiqxc1yk"]
 
-[ext_resource type="Script" path="res://scripts/levels/level.gd" id="1"]
+[ext_resource type="Script" uid="uid://braki44bdsq87" path="res://scripts/levels/level.gd" id="1"]
 
-[node name="Level" type="Node2D"]
+[node name="Level" type="Node2D" unique_id=1790135733]
 script = ExtResource("1")
 
-[node name="Tiles" type="Node2D" parent="."]
+[node name="Tiles" type="Node2D" parent="." unique_id=740256048]
 
-[node name="Collision" type="Node2D" parent="."]
+[node name="Collision" type="Node2D" parent="." unique_id=536047426]
 
-[node name="Props" type="Node2D" parent="."]
+[node name="Props" type="Node2D" parent="." unique_id=1244819576]
 
-[node name="Enemies" type="Node2D" parent="."]
+[node name="Enemies" type="Node2D" parent="." unique_id=573846924]
 
-[node name="Pickups" type="Node2D" parent="."]
+[node name="Pickups" type="Node2D" parent="." unique_id=1163406474]
