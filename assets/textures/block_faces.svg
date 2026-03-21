@@ -1,30 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="288" viewBox="0 0 128 288" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="320" viewBox="0 0 128 320" shape-rendering="crispEdges">
   <!-- grass -->
   <g id="grass_top" transform="translate(0,0)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#7dc643" stroke="#4d7f28"/>
-    <path d="M23 13 L31 9 L40 13" fill="none" stroke="#9be053" stroke-opacity="0.45"/>
-    <path d="M17 18 L25 14 L33 17 L41 13 L48 17" fill="none" stroke="#5f9633" stroke-opacity="0.35"/>
-    <path d="M25 22 L32 18 L39 22" fill="none" stroke="#5f9633" stroke-opacity="0.28"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#83d94a" stroke="#3f7423"/>
+    <path d="M23 13 L31 9 L40 13" fill="none" stroke="#c8f27f" stroke-opacity="0.5"/>
+    <path d="M17 18 L25 14 L33 17 L41 13 L48 17" fill="none" stroke="#5a9b33" stroke-opacity="0.38"/>
+    <path d="M25 22 L32 18 L39 22" fill="none" stroke="#4d872d" stroke-opacity="0.3"/>
   </g>
   <g id="grass_left" transform="translate(64,0)">
-    <polygon points="1,1 31,16 31,31 1,16" fill="#8f6038" stroke="#64401f"/>
-    <path d="M1 5 L31 20" fill="none" stroke="#66a336" stroke-opacity="0.65"/>
+    <polygon points="1,1 31,16 31,31 1,16" fill="#9a673c" stroke="#57381b"/>
+    <path d="M1 5 L31 20" fill="none" stroke="#6bae39" stroke-opacity="0.65"/>
     <path d="M6 10 C10 8,14 12,18 10 S26 12,29 10" fill="none" stroke="#75492a" stroke-opacity="0.35"/>
     <path d="M4 20 C10 17,15 22,20 19 S27 22,30 19" fill="none" stroke="#7d5131" stroke-opacity="0.35"/>
   </g>
   <g id="grass_right" transform="translate(96,0)">
-    <polygon points="1,16 31,1 31,16 1,31" fill="#774829" stroke="#533016"/>
-    <path d="M1 20 L31 5" fill="none" stroke="#66a336" stroke-opacity="0.65"/>
+    <polygon points="1,16 31,1 31,16 1,31" fill="#80502d" stroke="#462812"/>
+    <path d="M1 20 L31 5" fill="none" stroke="#6bae39" stroke-opacity="0.65"/>
     <path d="M4 11 C8 9,13 13,17 11 S24 13,28 11" fill="none" stroke="#6c4125" stroke-opacity="0.35"/>
     <path d="M4 23 C9 20,14 24,19 22 S26 24,29 22" fill="none" stroke="#74482a" stroke-opacity="0.35"/>
   </g>
 
   <!-- dirt -->
   <g id="dirt_top" transform="translate(0,32)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#8e673f" stroke="#5c4329"/>
-    <path d="M16 14 L25 10 L33 14 L42 11 L49 14" fill="none" stroke="#a47a4d" stroke-opacity="0.35"/>
-    <path d="M15 19 L24 16 L32 19 L40 16 L47 19" fill="none" stroke="#6b4e31" stroke-opacity="0.4"/>
-    <path d="M23 24 L31 20 L39 23" fill="none" stroke="#735638" stroke-opacity="0.28"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#9d7346" stroke="#50361e"/>
+    <path d="M16 14 L25 10 L33 14 L42 11 L49 14" fill="none" stroke="#be8d57" stroke-opacity="0.35"/>
+    <path d="M15 19 L24 16 L32 19 L40 16 L47 19" fill="none" stroke="#6d4c2b" stroke-opacity="0.42"/>
+    <path d="M23 24 L31 20 L39 23" fill="none" stroke="#825c36" stroke-opacity="0.3"/>
   </g>
   <g id="dirt_left" transform="translate(64,32)">
     <polygon points="1,1 31,16 31,31 1,16" fill="#725132" stroke="#4d361f"/>
@@ -39,10 +39,10 @@
 
   <!-- wood -->
   <g id="wood_top" transform="translate(0,64)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#a76a38" stroke="#6d4324"/>
-    <path d="M15 12 L49 12" fill="none" stroke="#c17f45" stroke-opacity="0.28"/>
-    <path d="M10 17 L54 17" fill="none" stroke="#7c4a28" stroke-opacity="0.4"/>
-    <path d="M17 22 L47 22" fill="none" stroke="#935d30" stroke-opacity="0.3"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#bb7840" stroke="#6d3e1a"/>
+    <path d="M15 12 L49 12" fill="none" stroke="#e7a25d" stroke-opacity="0.32"/>
+    <path d="M10 17 L54 17" fill="none" stroke="#885028" stroke-opacity="0.45"/>
+    <path d="M17 22 L47 22" fill="none" stroke="#9f6331" stroke-opacity="0.35"/>
   </g>
   <g id="wood_left" transform="translate(64,64)">
     <polygon points="1,1 31,16 31,31 1,16" fill="#90552c" stroke="#643719"/>
@@ -59,7 +59,7 @@
 
   <!-- light stone -->
   <g id="light_stone_top" transform="translate(0,96)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#d8d1c2" stroke="#9a907e"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#e7e0d2" stroke="#8e8370"/>
     <path d="M18 12 L26 8 L34 12 L27 17 Z" fill="none" stroke="#ece5d6" stroke-opacity="0.32"/>
     <path d="M34 14 L42 10 L50 14 L43 19 Z" fill="none" stroke="#b4ab98" stroke-opacity="0.35"/>
     <path d="M23 22 L31 18 L39 22 L32 26 Z" fill="none" stroke="#b4ab98" stroke-opacity="0.28"/>
@@ -77,7 +77,7 @@
 
   <!-- dark stone -->
   <g id="dark_stone_top" transform="translate(0,128)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#5f646b" stroke="#32363c"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#6d737b" stroke="#25292f"/>
     <path d="M16 13 L25 9 L33 13 L25 18 Z" fill="none" stroke="#7a8088" stroke-opacity="0.24"/>
     <path d="M34 15 L43 11 L50 15 L43 19 Z" fill="none" stroke="#8b9198" stroke-opacity="0.28"/>
     <path d="M25 22 L33 18 L40 21" fill="none" stroke="#8b9198" stroke-opacity="0.22"/>
@@ -95,29 +95,31 @@
 
   <!-- foliage -->
   <g id="foliage_top" transform="translate(0,160)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#366b2f" stroke="#1f3e1b"/>
-    <path d="M16 14 C21 10,27 18,32 12 C37 8,43 18,48 14" fill="none" stroke="#5ea54e" stroke-opacity="0.5"/>
-    <path d="M15 20 C20 17,25 22,30 18 C35 15,41 21,47 18" fill="none" stroke="#79bf62" stroke-opacity="0.3"/>
-    <path d="M24 24 C28 21,32 25,36 21 C39 18,43 22,45 20" fill="none" stroke="#4d8d42" stroke-opacity="0.28"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#2d5c26" stroke="#163116"/>
+    <path d="M16 14 C21 10,27 18,32 12 C37 8,43 18,48 14" fill="none" stroke="#5fa14d" stroke-opacity="0.42"/>
+    <path d="M15 20 C20 17,25 22,30 18 C35 15,41 21,47 18" fill="none" stroke="#84c66b" stroke-opacity="0.24"/>
+    <path d="M24 24 C28 21,32 25,36 21 C39 18,43 22,45 20" fill="none" stroke="#386f32" stroke-opacity="0.22"/>
   </g>
   <g id="foliage_left" transform="translate(64,160)">
-    <polygon points="1,1 31,16 31,31 1,16" fill="#4b412f" stroke="#2d261b"/>
-    <path d="M1 4 L31 19" fill="none" stroke="#315e2b" stroke-opacity="0.55"/>
-    <path d="M6 10 C10 8,14 12,18 10 S25 12,29 10" fill="none" stroke="#624c33" stroke-opacity="0.35"/>
-    <path d="M4 20 C10 17,15 22,20 19 S27 22,30 19" fill="none" stroke="#6f5639" stroke-opacity="0.35"/>
+    <polygon points="1,1 31,16 31,31 1,16" fill="#725131" stroke="#3d2715"/>
+    <path d="M1 4 L31 19" fill="none" stroke="#497936" stroke-opacity="0.55"/>
+    <path d="M7 4 L7 18" fill="none" stroke="#5e3d22" stroke-opacity="0.45"/>
+    <path d="M15 8 L15 23" fill="none" stroke="#52351d" stroke-opacity="0.45"/>
+    <path d="M23 12 L23 28" fill="none" stroke="#67442a" stroke-opacity="0.45"/>
   </g>
   <g id="foliage_right" transform="translate(96,160)">
-    <polygon points="1,16 31,1 31,16 1,31" fill="#403726" stroke="#241f15"/>
-    <path d="M1 19 L31 4" fill="none" stroke="#315e2b" stroke-opacity="0.55"/>
-    <path d="M4 11 C8 9,13 13,17 11 S24 13,28 11" fill="none" stroke="#5d472f" stroke-opacity="0.35"/>
-    <path d="M4 23 C9 20,14 24,19 22 S26 24,29 22" fill="none" stroke="#6a5338" stroke-opacity="0.35"/>
+    <polygon points="1,16 31,1 31,16 1,31" fill="#654729" stroke="#352112"/>
+    <path d="M1 19 L31 4" fill="none" stroke="#497936" stroke-opacity="0.55"/>
+    <path d="M8 12 L8 28" fill="none" stroke="#54361f" stroke-opacity="0.45"/>
+    <path d="M16 8 L16 24" fill="none" stroke="#4b301b" stroke-opacity="0.45"/>
+    <path d="M24 4 L24 19" fill="none" stroke="#604028" stroke-opacity="0.45"/>
   </g>
 
   <!-- temple stone -->
   <g id="temple_stone_top" transform="translate(0,192)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#c6b78b" stroke="#7f734f"/>
-    <path d="M18 13 L27 10 L36 13 L45 10" fill="none" stroke="#dfd1a6" stroke-opacity="0.3"/>
-    <path d="M15 18 L24 15 L32 18 L40 15 L49 18" fill="none" stroke="#8b7f59" stroke-opacity="0.42"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#d7c695" stroke="#766846"/>
+    <path d="M18 13 L27 10 L36 13 L45 10" fill="none" stroke="#f1dfb0" stroke-opacity="0.35"/>
+    <path d="M15 18 L24 15 L32 18 L40 15 L49 18" fill="none" stroke="#988455" stroke-opacity="0.42"/>
     <path d="M23 23 L32 19 L41 23" fill="none" stroke="#8b7f59" stroke-opacity="0.28"/>
   </g>
   <g id="temple_stone_left" transform="translate(64,192)">
@@ -135,7 +137,7 @@
 
   <!-- lava -->
   <g id="lava_top" transform="translate(0,224)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#c03b16" stroke="#5e170d"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#d34718" stroke="#61140b"/>
     <path d="M16 14 C22 10,27 18,32 12 C37 8,43 18,49 14" fill="none" stroke="#ffd46a" stroke-opacity="0.55"/>
     <path d="M15 20 C21 16,27 22,32 17 C37 13,43 21,48 18" fill="none" stroke="#ffb12f" stroke-opacity="0.5"/>
     <path d="M24 24 C28 21,32 24,36 20 C39 17,43 20,46 18" fill="none" stroke="#ff7b20" stroke-opacity="0.4"/>
@@ -153,7 +155,7 @@
 
   <!-- cracked -->
   <g id="cracked_top" transform="translate(0,256)">
-    <polygon points="32,1 63,16 32,31 1,16" fill="#55514f" stroke="#2b2928"/>
+    <polygon points="32,1 63,16 32,31 1,16" fill="#5d5855" stroke="#1f1d1c"/>
     <path d="M14 10 L26 15 L22 20 L35 23 L31 28" fill="none" stroke="#25110b" stroke-opacity="0.75"/>
     <path d="M40 9 L35 15 L45 18 L39 24 L49 27" fill="none" stroke="#ff7b20" stroke-opacity="0.35"/>
     <path d="M20 17 L28 13 L35 16" fill="none" stroke="#696462" stroke-opacity="0.2"/>
@@ -165,5 +167,27 @@
   <g id="cracked_right" transform="translate(96,256)">
     <polygon points="1,16 31,1 31,16 1,31" fill="#3a3634" stroke="#1a1817"/>
     <path d="M9 18 L17 13 L15 21 L23 17" fill="none" stroke="#2c1811" stroke-opacity="0.55"/>
+  </g>
+
+  <!-- forest grass -->
+  <g id="forest_grass_top" transform="translate(0,288)">
+    <polygon points="32,1 63,16 32,31 1,16" fill="#5da031" stroke="#284f1c"/>
+    <path d="M22 13 L31 9 L40 13" fill="none" stroke="#8fd455" stroke-opacity="0.42"/>
+    <path d="M16 18 L25 14 L33 17 L41 13 L49 17" fill="none" stroke="#447826" stroke-opacity="0.4"/>
+    <path d="M24 23 L32 19 L39 22" fill="none" stroke="#386420" stroke-opacity="0.3"/>
+  </g>
+  <g id="forest_grass_left" transform="translate(64,288)">
+    <polygon points="1,1 31,16 31,31 1,16" fill="#6b482d" stroke="#3a2414"/>
+    <path d="M1 5 L31 20" fill="none" stroke="#417028" stroke-opacity="0.62"/>
+    <path d="M7 5 L7 19" fill="none" stroke="#5b3921" stroke-opacity="0.45"/>
+    <path d="M15 9 L15 24" fill="none" stroke="#4e311b" stroke-opacity="0.45"/>
+    <path d="M23 13 L23 28" fill="none" stroke="#613f26" stroke-opacity="0.45"/>
+  </g>
+  <g id="forest_grass_right" transform="translate(96,288)">
+    <polygon points="1,16 31,1 31,16 1,31" fill="#5a3c24" stroke="#301d10"/>
+    <path d="M1 20 L31 5" fill="none" stroke="#417028" stroke-opacity="0.62"/>
+    <path d="M8 12 L8 28" fill="none" stroke="#4e311b" stroke-opacity="0.45"/>
+    <path d="M16 8 L16 24" fill="none" stroke="#452a17" stroke-opacity="0.45"/>
+    <path d="M24 4 L24 19" fill="none" stroke="#573822" stroke-opacity="0.45"/>
   </g>
 </svg>

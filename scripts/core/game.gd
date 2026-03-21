@@ -13,6 +13,9 @@ var current_level_index: int = 0
 var current_level: Node = null
 var run_state: String = "playing"
 var combat_music_active: bool = false
+var selected_difficulty_id: String = "normal"
+var difficulty_multiplier: float = 1.0
+var difficulty_selected: bool = false
 
 @onready var level_container: Node2D = $LevelContainer
 @onready var entity_layer: Node2D = $EntityLayer
@@ -29,9 +32,10 @@ func _ready() -> void:
 	player.hp_changed.connect(_on_player_hp_changed)
 	player.weapon_changed.connect(_on_player_weapon_changed)
 	player.died.connect(_on_player_died)
+	ui.difficulty_selected.connect(_on_difficulty_selected)
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
-	start_new_run()
+	ui.show_difficulty_screen()
 
 
 func _process(_delta: float) -> void:
@@ -55,6 +59,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func start_new_run() -> void:
+	if not difficulty_selected:
+		ui.show_difficulty_screen()
+		return
 	run_state = "playing"
 	player.reset_for_new_run()
 	player.set_control_enabled(true)
@@ -64,6 +71,14 @@ func start_new_run() -> void:
 	_load_level(current_level_index)
 	_on_player_hp_changed(player.hp, player.max_hp)
 	_on_player_weapon_changed(player.get_current_weapon())
+
+
+func get_difficulty_multiplier() -> float:
+	return difficulty_multiplier
+
+
+func get_difficulty_id() -> String:
+	return selected_difficulty_id
 
 
 func advance_to_level(level_index: int) -> void:
@@ -194,6 +209,13 @@ func _on_player_died() -> void:
 	ui.show_death_screen()
 
 
+func _on_difficulty_selected(difficulty_id: String, multiplier: float) -> void:
+	selected_difficulty_id = difficulty_id
+	difficulty_multiplier = multiplier
+	difficulty_selected = true
+	start_new_run()
+
+
 func _quit_game() -> void:
 	get_tree().quit()
 
@@ -212,6 +234,10 @@ func get_player() -> CharacterBody2D:
 
 func get_entity_layer() -> Node2D:
 	return entity_layer
+
+
+func get_current_level() -> Node:
+	return current_level
 
 
 func _clear_world_entities() -> void:

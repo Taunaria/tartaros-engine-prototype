@@ -1,0 +1,8 @@
+player_idle_dr: canvas=1058x985 crop=436x772 bbox=(311, 207, 747, 979)
+player_idle_ul: canvas=1058x985 crop=844x768 bbox=(107, 211, 951, 979)
+player_idle_ur: canvas=1058x985 crop=592x770 bbox=(233, 209, 825, 979)
+player_idle_dl: canvas=1058x985 crop=438x761 bbox=(310, 218, 748, 979)
+player_attack_dr: canvas=1058x985 crop=961x783 bbox=(48, 196, 1009, 979)
+player_attack_ul: canvas=1058x985 crop=954x961 bbox=(52, 18, 1006, 979)
+player_attack_ur: canvas=1058x985 crop=1034x757 bbox=(12, 222, 1046, 979)
+player_attack_dl: canvas=1058x985 crop=1018x800 bbox=(20, 179, 1038, 979)

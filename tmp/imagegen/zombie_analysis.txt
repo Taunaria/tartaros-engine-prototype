@@ -1,0 +1,8 @@
+zombie_idle_dr: canvas=913x934 crop=526x862 bbox=(193, 66, 719, 928)
+zombie_idle_ul: canvas=913x934 crop=507x856 bbox=(203, 72, 710, 928)
+zombie_idle_ur: canvas=913x934 crop=527x850 bbox=(193, 78, 720, 928)
+zombie_idle_dl: canvas=913x934 crop=543x848 bbox=(185, 80, 728, 928)
+zombie_attack_dr: canvas=913x934 crop=838x869 bbox=(37, 59, 875, 928)
+zombie_attack_ul: canvas=913x934 crop=889x910 bbox=(12, 18, 901, 928)
+zombie_attack_ur: canvas=913x934 crop=829x867 bbox=(42, 61, 871, 928)
+zombie_attack_dl: canvas=913x934 crop=817x850 bbox=(48, 78, 865, 928)

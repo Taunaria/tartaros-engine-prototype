@@ -2,6 +2,7 @@ extends CanvasLayer
 
 signal restart_requested
 signal quit_requested
+signal difficulty_selected(difficulty_id: String, multiplier: float)
 
 var level_title_timer := 0.0
 var pickup_message_timer := 0.0
@@ -14,6 +15,7 @@ var pickup_message_timer := 0.0
 @onready var message_label: Label = $MessageLabel
 @onready var death_screen: Control = $DeathScreen
 @onready var victory_screen: Control = $VictoryScreen
+@onready var difficulty_screen: Control = $DifficultyScreen
 
 
 func _ready() -> void:
@@ -28,6 +30,18 @@ func _ready() -> void:
 	)
 	$VictoryScreen/Panel/VBoxContainer/QuitButton.pressed.connect(func() -> void:
 		emit_signal("quit_requested")
+	)
+	$DifficultyScreen/Panel/VBoxContainer/EasyButton.pressed.connect(func() -> void:
+		difficulty_screen.visible = false
+		emit_signal("difficulty_selected", "easy", 0.5)
+	)
+	$DifficultyScreen/Panel/VBoxContainer/NormalButton.pressed.connect(func() -> void:
+		difficulty_screen.visible = false
+		emit_signal("difficulty_selected", "normal", 1.0)
+	)
+	$DifficultyScreen/Panel/VBoxContainer/HardButton.pressed.connect(func() -> void:
+		difficulty_screen.visible = false
+		emit_signal("difficulty_selected", "hard", 1.5)
 	)
 	hide_overlays()
 
@@ -48,6 +62,7 @@ func _process(delta: float) -> void:
 func hide_overlays() -> void:
 	death_screen.visible = false
 	victory_screen.visible = false
+	difficulty_screen.visible = false
 	level_title.visible = false
 	hint_label.visible = false
 	message_label.visible = false
@@ -93,3 +108,8 @@ func show_victory_screen() -> void:
 	victory_screen.visible = true
 	death_screen.visible = false
 	show_interaction_hint("")
+
+
+func show_difficulty_screen() -> void:
+	hide_overlays()
+	difficulty_screen.visible = true

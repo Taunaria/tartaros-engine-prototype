@@ -46,6 +46,11 @@ const FACE_REGIONS := {
 		"top_texture_region": Rect2(0, 256, 64, 32),
 		"left_texture_region": Rect2(64, 256, 32, 32),
 		"right_texture_region": Rect2(96, 256, 32, 32)
+	},
+	"forest_grass": {
+		"top_texture_region": Rect2(0, 288, 64, 32),
+		"left_texture_region": Rect2(64, 288, 32, 32),
+		"right_texture_region": Rect2(96, 288, 32, 32)
 	}
 }
 

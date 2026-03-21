@@ -70,7 +70,8 @@ func _draw() -> void:
 	_draw_character_shadow(base)
 	_draw_character_visual(base)
 
-	if attack_flash_timer > 0.0:
+	var visual_direction: String = CharacterVisuals.cardinal_to_visual_direction(last_direction)
+	if attack_flash_timer > 0.0 and not CharacterVisuals.has_state_texture("player", visual_direction, "attack"):
 		var weapon: Dictionary = get_current_weapon()
 		var tip_logic: Vector2 = position + last_direction * _get_attack_visual_length(weapon)
 		var tip: Vector2 = IsoMapper.logic_to_screen(tip_logic, render_origin) - position
@@ -432,7 +433,8 @@ func _draw_character_shadow(base: Vector2) -> void:
 
 
 func _draw_character_visual(base: Vector2) -> void:
-	var texture: Texture2D = CharacterVisuals.get_texture("player")
+	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", CharacterVisuals.cardinal_to_visual_direction(last_direction), _get_visual_state(), base)
+	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return
 
@@ -440,4 +442,10 @@ func _draw_character_visual(base: Vector2) -> void:
 	if hit_timer > 0.0:
 		modulate = Color(1.0, 0.76, 0.76, 1.0)
 
-	draw_texture_rect(texture, CharacterVisuals.get_draw_rect("player", base), false, modulate)
+	draw_texture_rect_region(texture, texture_data.get("draw_rect", Rect2()), texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
+
+
+func _get_visual_state() -> String:
+	if attack_active_timer > 0.0:
+		return "attack"
+	return "idle"

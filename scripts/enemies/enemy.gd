@@ -12,6 +12,9 @@ const ENEMY_HIT_PAUSE := 0.14
 const ENEMY_HIT_KNOCKBACK_SPEED := 78.0
 const ENEMY_HIT_KNOCKBACK_DECAY := 620.0
 const CLOSE_STRAFE_FACTOR := 0.42
+const PATH_REFRESH_INTERVAL := 0.32
+const PATH_WAYPOINT_REACHED_DISTANCE := 10.0
+const PATH_LOOKAHEAD_STEPS := 4
 
 const STATS := {
 	"zombie": {
@@ -102,6 +105,11 @@ var knockback_velocity: Vector2 = Vector2.ZERO
 var orbit_sign: float = 1.0
 var orbit_strength: float = 0.22
 var facing_direction: Vector2 = Vector2.DOWN
+var current_level: Node = null
+var navigation_path: Array = []
+var navigation_path_index: int = 0
+var navigation_refresh_timer: float = 0.0
+var navigation_target_tile: Vector2i = Vector2i(-9999, -9999)
 
 
 func setup(type_name: String, game_ref: Node, extra_data: Dictionary = {}) -> void:
@@ -109,6 +117,7 @@ func setup(type_name: String, game_ref: Node, extra_data: Dictionary = {}) -> vo
 	stats = STATS.get(enemy_type, STATS["zombie"]).duplicate(true)
 	game = game_ref
 	player = game.get_player()
+	current_level = game.get_current_level() if game != null and game.has_method("get_current_level") else null
 	hp = stats["max_hp"]
 	drop_data = extra_data.get("drop", {})
 	orbit_sign = -1.0 if (int(global_position.x / IsoMapper.LOGIC_TILE_SIZE) + int(global_position.y / IsoMapper.LOGIC_TILE_SIZE)) % 2 == 0 else 1.0
@@ -134,6 +143,7 @@ func set_active(value: bool) -> void:
 	active = value
 	if not active:
 		velocity = Vector2.ZERO
+		_clear_navigation_path()
 
 
 func set_render_origin(new_render_origin: Vector2) -> void:
@@ -149,9 +159,13 @@ func _physics_process(delta: float) -> void:
 		hit_flash_timer -= delta
 		queue_redraw()
 
+	if current_level == null or not is_instance_valid(current_level):
+		current_level = game.get_current_level() if game != null and game.has_method("get_current_level") else null
+
 	if not CombatDebug.enemy_logic_enabled:
 		_set_engaged(false)
 		velocity = Vector2.ZERO
+		_clear_navigation_path()
 		move_and_slide()
 		_queue_redraw_if_moved(previous_position)
 		return
@@ -180,6 +194,7 @@ func _physics_process(delta: float) -> void:
 	if not active or player == null or not is_instance_valid(player):
 		_set_engaged(false)
 		velocity = Vector2.ZERO
+		_clear_navigation_path()
 		move_and_slide()
 		_queue_redraw_if_moved(previous_position)
 		return
@@ -191,6 +206,7 @@ func _physics_process(delta: float) -> void:
 	if distance > stats["chase_range"]:
 		_set_engaged(false)
 		velocity = Vector2.ZERO
+		_clear_navigation_path()
 		move_and_slide()
 		_queue_redraw_if_moved(previous_position)
 		return
@@ -219,10 +235,11 @@ func _physics_process(delta: float) -> void:
 		return
 
 	if distance > stop_distance:
-		velocity = _get_approach_direction(to_player) * stats["speed"]
+		velocity = _get_navigation_direction(delta, to_player, false) * stats["speed"]
 	elif distance > attack_distance:
-		velocity = _get_close_combat_direction(to_player) * stats["speed"] * 0.72
+		velocity = _get_navigation_direction(delta, to_player, true) * stats["speed"] * 0.72
 	else:
+		_clear_navigation_path()
 		if attack_timer <= 0.0:
 			attack_timer = stats["attack_cooldown"]
 			attack_windup_timer = _get_attack_windup_duration()
@@ -231,6 +248,8 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = _get_strafe_direction(to_player) * stats["speed"] * _get_strafe_speed_factor()
 	move_and_slide()
+	if velocity.length_squared() > 1.0 and global_position.distance_squared_to(previous_position) < 0.5:
+		navigation_refresh_timer = 0.0
 	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	_queue_redraw_if_moved(previous_position)
 
@@ -399,6 +418,74 @@ func _get_attack_windup_duration() -> float:
 	return float(stats.get("attack_windup", 0.24))
 
 
+func _get_navigation_direction(delta: float, to_player: Vector2, close_mode: bool) -> Vector2:
+	var default_direction: Vector2 = _get_close_combat_direction(to_player) if close_mode else _get_approach_direction(to_player)
+	if current_level == null or not is_instance_valid(current_level):
+		return default_direction
+	if not current_level.has_method("world_to_tile") or not current_level.has_method("get_navigation_path_tiles"):
+		return default_direction
+
+	var from_tile: Vector2i = current_level.world_to_tile(global_position)
+	var target_tile: Vector2i = current_level.world_to_tile(player.global_position)
+	if current_level.has_method("has_clear_tile_line") and current_level.has_clear_tile_line(from_tile, target_tile):
+		_clear_navigation_path()
+		return default_direction
+
+	_update_navigation_path(delta, target_tile)
+	var path_direction: Vector2 = _get_navigation_path_direction(from_tile)
+	if path_direction.length_squared() <= 0.001:
+		return default_direction
+
+	var path_weight: float = 0.7 if close_mode else 0.82
+	return (path_direction * path_weight + default_direction * (1.0 - path_weight)).normalized()
+
+
+func _update_navigation_path(delta: float, target_tile: Vector2i) -> void:
+	navigation_refresh_timer = maxf(navigation_refresh_timer - delta, 0.0)
+	var needs_refresh: bool = navigation_path.is_empty() or navigation_refresh_timer <= 0.0 or target_tile != navigation_target_tile
+	if not needs_refresh:
+		return
+
+	navigation_refresh_timer = PATH_REFRESH_INTERVAL
+	navigation_target_tile = target_tile
+	navigation_path = current_level.get_navigation_path_tiles(global_position, player.global_position)
+	navigation_path_index = 1 if navigation_path.size() > 1 else 0
+
+
+func _get_navigation_path_direction(from_tile: Vector2i) -> Vector2:
+	if navigation_path.is_empty():
+		return Vector2.ZERO
+
+	while navigation_path_index < navigation_path.size():
+		var waypoint_world: Vector2 = current_level.tile_to_world(navigation_path[navigation_path_index])
+		if global_position.distance_to(waypoint_world) > PATH_WAYPOINT_REACHED_DISTANCE:
+			break
+		navigation_path_index += 1
+
+	if navigation_path_index >= navigation_path.size():
+		return Vector2.ZERO
+
+	var furthest_visible_index: int = navigation_path_index
+	if current_level.has_method("has_clear_tile_line"):
+		var end_index: int = mini(navigation_path_index + PATH_LOOKAHEAD_STEPS, navigation_path.size() - 1)
+		for i in range(navigation_path_index, end_index + 1):
+			if current_level.has_clear_tile_line(from_tile, navigation_path[i]):
+				furthest_visible_index = i
+			else:
+				break
+	navigation_path_index = furthest_visible_index
+
+	var target_world: Vector2 = current_level.tile_to_world(navigation_path[navigation_path_index])
+	return (target_world - global_position).normalized()
+
+
+func _clear_navigation_path() -> void:
+	navigation_path.clear()
+	navigation_path_index = 0
+	navigation_refresh_timer = 0.0
+	navigation_target_tile = Vector2i(-9999, -9999)
+
+
 func _get_approach_direction(to_player: Vector2) -> Vector2:
 	var forward: Vector2 = to_player.normalized()
 	var tangent: Vector2 = Vector2(-forward.y, forward.x) * orbit_sign
@@ -440,7 +527,13 @@ func _perform_attack_lunge(attack_direction: Vector2, current_distance: float) -
 func _get_facing_direction(direction: Vector2) -> Vector2:
 	if direction.length_squared() <= 0.001:
 		return facing_direction
-	return direction.normalized()
+	return _to_cardinal_direction(direction)
+
+
+func _to_cardinal_direction(direction: Vector2) -> Vector2:
+	if absf(direction.x) > absf(direction.y):
+		return Vector2.RIGHT if direction.x > 0.0 else Vector2.LEFT
+	return Vector2.DOWN if direction.y > 0.0 else Vector2.UP
 
 
 func _logic_vector_to_local_screen_delta(logic_vector: Vector2) -> Vector2:
@@ -513,7 +606,8 @@ func _draw_character_shadow(base: Vector2) -> void:
 
 
 func _draw_character_visual(base: Vector2) -> void:
-	var texture: Texture2D = CharacterVisuals.get_texture(enemy_type)
+	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data(enemy_type, CharacterVisuals.cardinal_to_visual_direction(facing_direction), _get_visual_state(), base)
+	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return
 
@@ -521,4 +615,10 @@ func _draw_character_visual(base: Vector2) -> void:
 	if hit_flash_timer > 0.0:
 		modulate = Color(1.0, 0.78, 0.78, 1.0)
 
-	draw_texture_rect(texture, CharacterVisuals.get_draw_rect(enemy_type, base), false, modulate)
+	draw_texture_rect_region(texture, texture_data.get("draw_rect", Rect2()), texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
+
+
+func _get_visual_state() -> String:
+	if attack_windup_timer > 0.0 or slam_charge > 0.0:
+		return "attack"
+	return "idle"

@@ -1,0 +1,8 @@
+boss_idle_dr: canvas=890x876 crop=619x764 bbox=(135, 106, 754, 870)
+boss_idle_ul: canvas=890x876 crop=646x852 bbox=(122, 18, 768, 870)
+boss_idle_ur: canvas=890x876 crop=647x852 bbox=(121, 18, 768, 870)
+boss_idle_dl: canvas=890x876 crop=652x843 bbox=(119, 27, 771, 870)
+boss_attack_dr: canvas=890x876 crop=866x700 bbox=(12, 170, 878, 870)
+boss_attack_ul: canvas=890x876 crop=845x820 bbox=(23, 50, 868, 870)
+boss_attack_ur: canvas=890x876 crop=782x820 bbox=(54, 50, 836, 870)
+boss_attack_dl: canvas=890x876 crop=859x810 bbox=(15, 60, 874, 870)

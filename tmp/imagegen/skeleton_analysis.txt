@@ -1,0 +1,8 @@
+skeleton_idle_dr: canvas=1021x868 crop=396x738 bbox=(312, 124, 708, 862)
+skeleton_idle_ul: canvas=1021x868 crop=761x792 bbox=(130, 70, 891, 862)
+skeleton_idle_ur: canvas=1021x868 crop=519x741 bbox=(251, 121, 770, 862)
+skeleton_idle_dl: canvas=1021x868 crop=512x738 bbox=(254, 124, 766, 862)
+skeleton_attack_dr: canvas=1021x868 crop=863x750 bbox=(79, 112, 942, 862)
+skeleton_attack_ul: canvas=1021x868 crop=847x844 bbox=(87, 18, 934, 862)
+skeleton_attack_ur: canvas=1021x868 crop=997x750 bbox=(12, 112, 1009, 862)
+skeleton_attack_dl: canvas=1021x868 crop=797x743 bbox=(112, 119, 909, 862)

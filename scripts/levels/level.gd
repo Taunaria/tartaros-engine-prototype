@@ -19,7 +19,7 @@ const THEMES := {
 		"wall_tile": "light_stone"
 	},
 	"forest": {
-		"floor_tile": "grass",
+		"floor_tile": "forest_grass",
 		"accent_tile": "dirt",
 		"wall_tile": "foliage"
 	},
@@ -60,6 +60,8 @@ var is_final_level: bool = false
 var render_origin: Vector2 = Vector2.ZERO
 var engaged_enemy_count: int = 0
 var entity_layer: Node2D = null
+var navigation_grid: AStarGrid2D = null
+var blocked_tiles: Dictionary = {}
 
 @onready var ground_layer: Node2D = $GroundLayer
 @onready var structure_top_layer: Node2D = $StructureTopLayer
@@ -87,6 +89,7 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	_clear_container(props_root)
 	_clear_container(pickups_root)
 	_clear_container(occlusion_layer)
+	_build_navigation_grid()
 	_build_tiles()
 	_build_colliders()
 	_spawn_chest(level_data.get("chest", {}))
@@ -139,6 +142,33 @@ func world_to_tile(world_position: Vector2) -> Vector2i:
 	return Vector2i(floori(world_position.x / TILE_SIZE), floori(world_position.y / TILE_SIZE))
 
 
+func get_navigation_path_tiles(from_world: Vector2, to_world: Vector2) -> Array:
+	if navigation_grid == null:
+		return []
+
+	var start_tile: Vector2i = _find_nearest_walkable_tile(world_to_tile(from_world))
+	var end_tile: Vector2i = _find_nearest_walkable_tile(world_to_tile(to_world))
+	if start_tile.x < 0 or end_tile.x < 0:
+		return []
+	return navigation_grid.get_id_path(start_tile, end_tile)
+
+
+func has_clear_tile_line(from_tile: Vector2i, to_tile: Vector2i) -> bool:
+	for tile in _get_line_tiles(from_tile, to_tile):
+		if tile == from_tile:
+			continue
+		if not is_tile_walkable(tile):
+			return false
+	return true
+
+
+func is_tile_walkable(tile: Vector2i) -> bool:
+	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	if tile.x < 0 or tile.y < 0 or tile.x >= size.x or tile.y >= size.y:
+		return false
+	return not blocked_tiles.has(_tile_key(tile))
+
+
 func _build_colliders() -> void:
 	for wall_rect in blocked_rects:
 		var body := StaticBody2D.new()
@@ -151,6 +181,27 @@ func _build_colliders() -> void:
 		body.position = Vector2(wall_rect.position) * TILE_SIZE + Vector2(wall_rect.size) * TILE_SIZE * 0.5
 		body.add_child(shape)
 		collision_root.add_child(body)
+
+
+func _build_navigation_grid() -> void:
+	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	blocked_tiles.clear()
+	navigation_grid = AStarGrid2D.new()
+	navigation_grid.region = Rect2i(Vector2i.ZERO, size)
+	navigation_grid.cell_size = Vector2.ONE
+	navigation_grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	navigation_grid.update()
+
+	for blocked_rect in blocked_rects:
+		_mark_rect_tiles_solid(blocked_rect)
+
+
+func _mark_rect_tiles_solid(blocked_rect: Rect2i) -> void:
+	for y in range(blocked_rect.position.y, blocked_rect.end.y):
+		for x in range(blocked_rect.position.x, blocked_rect.end.x):
+			var tile := Vector2i(x, y)
+			blocked_tiles[_tile_key(tile)] = true
+			navigation_grid.set_point_solid(tile, true)
 
 
 func _build_tiles() -> void:
@@ -238,7 +289,7 @@ func _spawn_exit(current_level_index: int, total_levels: int) -> void:
 func _spawn_enemies() -> void:
 	remaining_enemies = 0
 	engaged_enemy_count = 0
-	for enemy_data in level_data.get("enemies", []):
+	for enemy_data in _get_scaled_enemies():
 		var enemy: CharacterBody2D = EnemyScene.instantiate()
 		enemy.position = tile_to_world(enemy_data.get("position", Vector2i.ZERO))
 		enemy.setup(enemy_data.get("type", "zombie"), game, enemy_data)
@@ -249,6 +300,142 @@ func _spawn_enemies() -> void:
 		remaining_enemies += 1
 
 	_update_exit_state()
+
+
+func _get_scaled_enemies() -> Array:
+	var base_enemies: Array = level_data.get("enemies", [])
+	var base_count: int = base_enemies.size()
+	if base_count == 0:
+		return []
+
+	var multiplier: float = 1.0
+	if game != null and game.has_method("get_difficulty_multiplier"):
+		multiplier = float(game.get_difficulty_multiplier())
+	var target_count: int = maxi(1, int(round(float(base_count) * multiplier)))
+	if target_count == base_count:
+		var same_count: Array = []
+		for enemy_data in base_enemies:
+			same_count.append(enemy_data.duplicate(true))
+		return same_count
+	if target_count < base_count:
+		return _sample_enemies_evenly(base_enemies, target_count)
+	return _extend_enemy_list(base_enemies, target_count)
+
+
+func _sample_enemies_evenly(base_enemies: Array, target_count: int) -> Array:
+	var sampled: Array = []
+	var last_index: int = -1
+	for i in range(target_count):
+		var ratio: float = (float(i) + 0.5) / float(target_count)
+		var index: int = clampi(int(round(ratio * float(base_enemies.size()) - 0.5)), 0, base_enemies.size() - 1)
+		if index <= last_index:
+			index = mini(last_index + 1, base_enemies.size() - 1)
+		last_index = index
+		sampled.append(base_enemies[index].duplicate(true))
+	return sampled
+
+
+func _extend_enemy_list(base_enemies: Array, target_count: int) -> Array:
+	var extended: Array = []
+	var occupied: Dictionary = {}
+	for enemy_data in base_enemies:
+		var duplicated: Dictionary = enemy_data.duplicate(true)
+		extended.append(duplicated)
+		occupied[_tile_key(duplicated.get("position", Vector2i.ZERO))] = true
+
+	var extra_index: int = 0
+	while extended.size() < target_count:
+		var source_data: Dictionary = base_enemies[extra_index % base_enemies.size()]
+		var source_position: Vector2i = source_data.get("position", Vector2i.ZERO)
+		var spawn_position: Vector2i = _find_extra_enemy_position(source_position, occupied)
+		if spawn_position == source_position and occupied.has(_tile_key(spawn_position)):
+			extra_index += 1
+			if extra_index > base_enemies.size() * 16:
+				break
+			continue
+		var duplicated_extra: Dictionary = source_data.duplicate(true)
+		duplicated_extra["position"] = spawn_position
+		extended.append(duplicated_extra)
+		occupied[_tile_key(spawn_position)] = true
+		extra_index += 1
+	return extended
+
+
+func _find_extra_enemy_position(source_position: Vector2i, occupied: Dictionary) -> Vector2i:
+	var offsets := [
+		Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1),
+		Vector2i(1, 1), Vector2i(-1, 1), Vector2i(1, -1), Vector2i(-1, -1),
+		Vector2i(2, 0), Vector2i(-2, 0), Vector2i(0, 2), Vector2i(0, -2),
+		Vector2i(2, 1), Vector2i(-2, 1), Vector2i(2, -1), Vector2i(-2, -1)
+	]
+	for offset in offsets:
+		var candidate: Vector2i = source_position + offset
+		if not _is_enemy_spawn_tile_available(candidate, occupied):
+			continue
+		return candidate
+	return source_position
+
+
+func _find_nearest_walkable_tile(tile: Vector2i) -> Vector2i:
+	if is_tile_walkable(tile):
+		return tile
+
+	for radius in range(1, 7):
+		for y in range(tile.y - radius, tile.y + radius + 1):
+			for x in range(tile.x - radius, tile.x + radius + 1):
+				var candidate := Vector2i(x, y)
+				if not is_tile_walkable(candidate):
+					continue
+				return candidate
+	return Vector2i(-1, -1)
+
+
+func _is_enemy_spawn_tile_available(tile: Vector2i, occupied: Dictionary) -> bool:
+	var level_size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	if tile.x < 0 or tile.y < 0 or tile.x >= level_size.x or tile.y >= level_size.y:
+		return false
+	if occupied.has(_tile_key(tile)):
+		return false
+	if _is_in_rects(tile, blocked_rects):
+		return false
+	if tile == level_data.get("start", Vector2i(-1, -1)):
+		return false
+	if tile == level_data.get("exit", Vector2i(-1, -1)):
+		return false
+	var chest_data: Dictionary = level_data.get("chest", {})
+	if tile == chest_data.get("position", Vector2i(-1, -1)):
+		return false
+	return true
+
+
+func _tile_key(tile: Vector2i) -> String:
+	return "%d:%d" % [tile.x, tile.y]
+
+
+func _get_line_tiles(from_tile: Vector2i, to_tile: Vector2i) -> Array:
+	var tiles: Array = []
+	var x0: int = from_tile.x
+	var y0: int = from_tile.y
+	var x1: int = to_tile.x
+	var y1: int = to_tile.y
+	var dx: int = absi(x1 - x0)
+	var dy: int = absi(y1 - y0)
+	var sx: int = 1 if x0 < x1 else -1
+	var sy: int = 1 if y0 < y1 else -1
+	var err: int = dx - dy
+
+	while true:
+		tiles.append(Vector2i(x0, y0))
+		if x0 == x1 and y0 == y1:
+			break
+		var e2: int = err * 2
+		if e2 > -dy:
+			err -= dy
+			x0 += sx
+		if e2 < dx:
+			err += dx
+			y0 += sy
+	return tiles
 
 
 
