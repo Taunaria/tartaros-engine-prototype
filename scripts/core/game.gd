@@ -86,12 +86,19 @@ func give_reward(reward: Dictionary) -> void:
 		var weapon_id: String = reward.get("id", "")
 		var unlocked: bool = player.unlock_weapon(weapon_id)
 		player.equip_weapon(weapon_id)
+		var heal_amount: int = reward.get("heal_amount", 0)
+		if not unlocked:
+			heal_amount += 2
+		var healed_amount: int = 0
+		if heal_amount > 0:
+			healed_amount = player.heal(heal_amount)
 		if unlocked:
-			ui.show_pickup_message("Gefunden: %s" % reward.get("label", "Waffe"))
-		else:
-			var healed: int = player.heal(2)
-			if healed > 0:
-				ui.show_pickup_message("Bekannte Waffe. +%d HP" % healed)
+			var message: String = "Gefunden: %s" % reward.get("label", "Waffe")
+			if healed_amount > 0:
+				message += " und +%d HP" % healed_amount
+			ui.show_pickup_message(message)
+		elif healed_amount > 0:
+			ui.show_pickup_message("Bekannte Waffe. +%d HP" % healed_amount)
 	elif reward_type == "heal":
 		var healed_amount: int = player.heal(reward.get("amount", 0))
 		ui.show_pickup_message("+%d HP" % healed_amount)

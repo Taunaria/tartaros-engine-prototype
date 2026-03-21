@@ -99,7 +99,7 @@ static func _village_level() -> Dictionary:
 		"exit": Vector2i(28, 4),
 		"chest": {
 			"position": Vector2i(7, 15),
-			"reward": {"type": "weapon", "id": "sword", "label": "Schwert"}
+			"reward": {"type": "weapon", "id": "club", "label": "Knueppel"}
 		},
 		"accent_rects": paths,
 		"wall_rects": walls,
@@ -109,9 +109,11 @@ static func _village_level() -> Dictionary:
 			_material("wood", barn + shed + fences)
 		],
 		"enemies": [
-			{"type": "strawman", "position": Vector2i(6, 27)},
 			{"type": "zombie", "position": Vector2i(15, 22)},
-			{"type": "zombie", "position": Vector2i(24, 14)}
+			{"type": "zombie", "position": Vector2i(10, 16)},
+			{"type": "zombie", "position": Vector2i(20, 18)},
+			{"type": "zombie", "position": Vector2i(23, 14)},
+			{"type": "skeleton", "position": Vector2i(25, 12)}
 		]
 	}
 
@@ -198,7 +200,7 @@ static func _forest_level() -> Dictionary:
 		"exit": Vector2i(28, 3),
 		"chest": {
 			"position": Vector2i(25, 24),
-			"reward": {"type": "heal", "amount": 3, "label": "Heilration"}
+			"reward": {"type": "weapon", "id": "woodcutter_axe", "label": "Holzaxt"}
 		},
 		"accent_rects": trails,
 		"wall_rects": tree_walls,
@@ -209,9 +211,13 @@ static func _forest_level() -> Dictionary:
 		],
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(10, 25)},
-			{"type": "zombie", "position": Vector2i(16, 19)},
-			{"type": "zombie", "position": Vector2i(22, 11)},
-			{"type": "zombie", "position": Vector2i(26, 22), "drop": {"type": "weapon", "id": "sword", "label": "Schwert"}}
+			{"type": "zombie", "position": Vector2i(12, 22)},
+			{"type": "zombie", "position": Vector2i(17, 19)},
+			{"type": "skeleton", "position": Vector2i(20, 17)},
+			{"type": "zombie", "position": Vector2i(22, 12)},
+			{"type": "skeleton", "position": Vector2i(24, 10)},
+			{"type": "zombie", "position": Vector2i(24, 22), "drop": {"type": "heal", "amount": 2, "label": "Verband"}},
+			{"type": "skeleton", "position": Vector2i(26, 21)}
 		]
 	}
 
@@ -282,7 +288,7 @@ static func _cave_level() -> Dictionary:
 		"exit": Vector2i(28, 4),
 		"chest": {
 			"position": Vector2i(24, 24),
-			"reward": {"type": "weapon", "id": "axe", "label": "Axt"}
+			"reward": {"type": "weapon", "id": "short_sword", "label": "Kurzschwert"}
 		},
 		"accent_rects": cave_path,
 		"wall_rects": cave_walls,
@@ -292,9 +298,11 @@ static func _cave_level() -> Dictionary:
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(9, 26)},
 			{"type": "zombie", "position": Vector2i(14, 21)},
-			{"type": "zombie", "position": Vector2i(18, 17)},
-			{"type": "zombie", "position": Vector2i(24, 13)},
-			{"type": "skeleton", "position": Vector2i(25, 8), "drop": {"type": "weapon", "id": "axe", "label": "Axt"}}
+			{"type": "skeleton", "position": Vector2i(16, 17)},
+			{"type": "zombie", "position": Vector2i(19, 16)},
+			{"type": "zombie", "position": Vector2i(21, 14)},
+			{"type": "skeleton", "position": Vector2i(25, 10), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}},
+			{"type": "zombie", "position": Vector2i(23, 24)}
 		]
 	}
 
@@ -384,7 +392,9 @@ static func _prison_level() -> Dictionary:
 		],
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(10, 24)},
+			{"type": "skeleton", "position": Vector2i(11, 22)},
 			{"type": "zombie", "position": Vector2i(13, 18)},
+			{"type": "skeleton", "position": Vector2i(13, 12)},
 			{"type": "zombie", "position": Vector2i(16, 11)},
 			{"type": "zombie", "position": Vector2i(16, 22)},
 			{"type": "zombie", "position": Vector2i(25, 11)},
@@ -451,7 +461,7 @@ static func _temple_level() -> Dictionary:
 		"exit": Vector2i(15, 3),
 		"chest": {
 			"position": Vector2i(25, 26),
-			"reward": {"type": "heal", "amount": 5, "label": "Tempeltrank"}
+			"reward": {"type": "weapon", "id": "long_sword", "label": "Langschwert"}
 		},
 		"accent_rects": processional_paths,
 		"wall_rects": temple_walls,
@@ -462,13 +472,14 @@ static func _temple_level() -> Dictionary:
 		],
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(8, 18)},
+			{"type": "skeleton", "position": Vector2i(11, 17)},
 			{"type": "zombie", "position": Vector2i(12, 15)},
 			{"type": "zombie", "position": Vector2i(19, 15)},
+			{"type": "skeleton", "position": Vector2i(20, 17)},
 			{"type": "zombie", "position": Vector2i(23, 18)},
 			{"type": "skeleton", "position": Vector2i(8, 9)},
 			{"type": "skeleton", "position": Vector2i(23, 9)},
-			{"type": "skeleton", "position": Vector2i(11, 24)},
-			{"type": "skeleton", "position": Vector2i(20, 24), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}}
+			{"type": "skeleton", "position": Vector2i(21, 24), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}}
 		]
 	}
 
@@ -529,7 +540,12 @@ static func _abyss_level() -> Dictionary:
 		"exit": Vector2i(15, 5),
 		"chest": {
 			"position": Vector2i(6, 25),
-			"reward": {"type": "heal", "amount": 10, "label": "Vollheilung"}
+			"reward": {
+				"type": "weapon",
+				"id": "magic_long_sword",
+				"label": "Magisches Langschwert",
+				"heal_amount": 6
+			}
 		},
 		"accent_rects": lava_fields,
 		"wall_rects": abyss_walls,
@@ -537,6 +553,11 @@ static func _abyss_level() -> Dictionary:
 		"height_two_rects": abyss_walls,
 		"material_rects": [],
 		"enemies": [
+			{"type": "zombie", "position": Vector2i(9, 24)},
+			{"type": "zombie", "position": Vector2i(12, 22)},
+			{"type": "skeleton", "position": Vector2i(18, 21)},
+			{"type": "zombie", "position": Vector2i(14, 17)},
+			{"type": "skeleton", "position": Vector2i(19, 15), "drop": {"type": "heal", "amount": 3, "label": "Heiltrank"}},
 			{"type": "boss", "position": Vector2i(15, 10)}
 		]
 	}

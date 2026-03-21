@@ -48,6 +48,7 @@ const THEMES := {
 var game: Node = null
 var level_data: Dictionary = {}
 var blocked_rects: Array = []
+var wall_rects: Array = []
 var accent_rects: Array = []
 var material_rects: Array = []
 var height_one_rects: Array = []
@@ -71,11 +72,12 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	level_data = data.duplicate(true)
 	is_final_level = current_level_index >= total_levels - 1
 	render_origin = IsoMapper.level_render_origin(level_data.get("size", Vector2i(32, 32)))
-	blocked_rects = level_data.get("wall_rects", [])
+	wall_rects = level_data.get("wall_rects", [])
 	accent_rects = level_data.get("accent_rects", [])
 	material_rects = level_data.get("material_rects", [])
 	height_one_rects = level_data.get("height_one_rects", [])
-	height_two_rects = level_data.get("height_two_rects", blocked_rects)
+	height_two_rects = level_data.get("height_two_rects", wall_rects)
+	blocked_rects = wall_rects + level_data.get("collision_height_one_rects", height_one_rects)
 	_clear_container(tiles_root)
 	_clear_container(collision_root)
 	_clear_container(props_root)

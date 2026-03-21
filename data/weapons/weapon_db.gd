@@ -2,42 +2,66 @@ extends RefCounted
 class_name WeaponDB
 
 const DATA := {
+	"dagger": {
+		"id": "dagger",
+		"name": "Dolch",
+		"damage": 1,
+		"attack_range": 24.0,
+		"attack_speed": 0.32,
+		"attack_width": 20.0,
+		"color": Color8(210, 210, 221)
+	},
 	"club": {
 		"id": "club",
 		"name": "Knueppel",
 		"damage": 2,
-		"range": 30.0,
-		"hit_radius": 38.0,
-		"swing_angle_degrees": 110.0,
-		"cooldown": 0.45,
+		"attack_range": 32.0,
+		"attack_speed": 0.5,
+		"attack_width": 26.0,
 		"color": Color8(137, 92, 56)
 	},
-	"sword": {
-		"id": "sword",
-		"name": "Schwert",
+	"woodcutter_axe": {
+		"id": "woodcutter_axe",
+		"name": "Holzaxt",
 		"damage": 3,
-		"range": 38.0,
-		"hit_radius": 46.0,
-		"swing_angle_degrees": 90.0,
-		"cooldown": 0.38,
+		"attack_range": 34.0,
+		"attack_speed": 0.56,
+		"attack_width": 32.0,
+		"color": Color8(169, 185, 150)
+	},
+	"short_sword": {
+		"id": "short_sword",
+		"name": "Kurzschwert",
+		"damage": 3,
+		"attack_range": 38.0,
+		"attack_speed": 0.4,
+		"attack_width": 24.0,
 		"color": Color8(183, 192, 203)
 	},
-	"axe": {
-		"id": "axe",
-		"name": "Axt",
+	"long_sword": {
+		"id": "long_sword",
+		"name": "Langschwert",
 		"damage": 4,
-		"range": 34.0,
-		"hit_radius": 42.0,
-		"swing_angle_degrees": 120.0,
-		"cooldown": 0.55,
-		"color": Color8(169, 185, 150)
+		"attack_range": 44.0,
+		"attack_speed": 0.36,
+		"attack_width": 26.0,
+		"color": Color8(198, 209, 224)
+	},
+	"magic_long_sword": {
+		"id": "magic_long_sword",
+		"name": "Magisches Langschwert",
+		"damage": 5,
+		"attack_range": 50.0,
+		"attack_speed": 0.32,
+		"attack_width": 28.0,
+		"color": Color8(108, 220, 255)
 	}
 }
 
 
 static func get_weapon(weapon_id: String) -> Dictionary:
-	return DATA.get(weapon_id, DATA["club"]).duplicate(true)
+	return DATA.get(weapon_id, DATA["dagger"]).duplicate(true)
 
 
 static func get_default_weapon_id() -> String:
-	return "club"
+	return "dagger"

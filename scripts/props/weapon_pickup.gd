@@ -1,6 +1,7 @@
 extends Area2D
 
 const IsoMapper := preload("res://scripts/core/iso.gd")
+const WeaponDB := preload("res://data/weapons/weapon_db.gd")
 
 var game: Node = null
 var reward_data: Dictionary = {}
@@ -31,11 +32,8 @@ func _draw() -> void:
 	var base: Vector2 = IsoMapper.render_offset(position, render_origin)
 	var color: Color = Color8(240, 210, 104)
 	if reward_data.get("type", "") == "weapon":
-		var weapon_id: String = reward_data.get("id", "club")
-		if weapon_id == "sword":
-			color = Color8(188, 201, 222)
-		elif weapon_id == "axe":
-			color = Color8(157, 197, 141)
+		var weapon_id: String = reward_data.get("id", WeaponDB.get_default_weapon_id())
+		color = WeaponDB.get_weapon(weapon_id).get("color", color)
 	elif reward_data.get("type", "") == "heal":
 		color = Color8(204, 82, 82)
 
