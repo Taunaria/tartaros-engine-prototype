@@ -108,7 +108,7 @@ func setup(type_name: String, game_ref: Node, extra_data: Dictionary = {}) -> vo
 	enemy_type = type_name
 	stats = STATS.get(enemy_type, STATS["zombie"]).duplicate(true)
 	game = game_ref
-	player = game.get_node("Player")
+	player = game.get_player()
 	hp = stats["max_hp"]
 	drop_data = extra_data.get("drop", {})
 	orbit_sign = -1.0 if (int(global_position.x / IsoMapper.LOGIC_TILE_SIZE) + int(global_position.y / IsoMapper.LOGIC_TILE_SIZE)) % 2 == 0 else 1.0
@@ -138,7 +138,7 @@ func set_active(value: bool) -> void:
 
 func set_render_origin(new_render_origin: Vector2) -> void:
 	render_origin = new_render_origin
-	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	queue_redraw()
 
 
@@ -164,7 +164,7 @@ func _physics_process(delta: float) -> void:
 		velocity = knockback_velocity
 		knockback_velocity = knockback_velocity.move_toward(Vector2.ZERO, ENEMY_HIT_KNOCKBACK_DECAY * delta)
 		move_and_slide()
-		z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+		z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 		_queue_redraw_if_moved(previous_position)
 		return
 
@@ -206,7 +206,7 @@ func _physics_process(delta: float) -> void:
 		if attack_windup_timer <= 0.0:
 			_resolve_melee_attack()
 		move_and_slide()
-		z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+		z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 		_queue_redraw_if_moved(previous_position)
 		return
 
@@ -231,7 +231,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = _get_strafe_direction(to_player) * stats["speed"] * _get_strafe_speed_factor()
 	move_and_slide()
-	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	_queue_redraw_if_moved(previous_position)
 
 
@@ -497,6 +497,10 @@ func _get_player_collision_radius() -> float:
 func _queue_redraw_if_moved(previous_position: Vector2) -> void:
 	if global_position.distance_squared_to(previous_position) > 0.001:
 		queue_redraw()
+
+
+func _get_sort_anchor_position() -> Vector2:
+	return global_position
 
 
 func _draw_character_shadow(base: Vector2) -> void:

@@ -59,12 +59,14 @@ var active: bool = true
 var is_final_level: bool = false
 var render_origin: Vector2 = Vector2.ZERO
 var engaged_enemy_count: int = 0
+var entity_layer: Node2D = null
 
-@onready var tiles_root: Node2D = $Tiles
+@onready var ground_layer: Node2D = $GroundLayer
+@onready var structure_top_layer: Node2D = $StructureTopLayer
 @onready var collision_root: Node2D = $Collision
 @onready var props_root: Node2D = $Props
-@onready var enemies_root: Node2D = $Enemies
 @onready var pickups_root: Node2D = $Pickups
+@onready var occlusion_layer: Node2D = $OcclusionLayer
 
 
 func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_levels: int) -> void:
@@ -78,11 +80,13 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	height_one_rects = level_data.get("height_one_rects", [])
 	height_two_rects = level_data.get("height_two_rects", wall_rects)
 	blocked_rects = wall_rects + level_data.get("collision_height_one_rects", height_one_rects)
-	_clear_container(tiles_root)
+	entity_layer = game.get_entity_layer()
+	_clear_container(ground_layer)
+	_clear_container(structure_top_layer)
 	_clear_container(collision_root)
 	_clear_container(props_root)
-	_clear_container(enemies_root)
 	_clear_container(pickups_root)
+	_clear_container(occlusion_layer)
 	_build_tiles()
 	_build_colliders()
 	_spawn_chest(level_data.get("chest", {}))
@@ -105,7 +109,7 @@ func get_render_origin() -> Vector2:
 
 func set_active(value: bool) -> void:
 	active = value
-	for child in enemies_root.get_children():
+	for child in get_tree().get_nodes_in_group("enemies"):
 		if child.has_method("set_active"):
 			child.set_active(value)
 	for child in props_root.get_children():
@@ -155,14 +159,54 @@ func _build_tiles() -> void:
 	for y in range(size.y):
 		for x in range(size.x):
 			var cell := Vector2i(x, y)
-			var tile: Node2D = BlockTileScene.instantiate()
-			tile.setup(
-				_get_tile_type(cell, theme),
+			var tile_type: String = _get_tile_type(cell, theme)
+			var visual_height: int = _get_tile_visual_height(cell)
+			var left_face_visible_from_layer: int = _get_neighbor_structure_height(cell + Vector2i(0, 1))
+			var right_face_visible_from_layer: int = _get_neighbor_structure_height(cell + Vector2i(1, 0))
+
+			if visual_height <= GROUND_HEIGHT:
+				var ground_tile: Node2D = BlockTileScene.instantiate()
+				ground_tile.setup(
+					tile_type,
+					cell,
+					render_origin,
+					GROUND_HEIGHT,
+					true,
+					false,
+					0,
+					0,
+					0
+				)
+				ground_layer.add_child(ground_tile)
+				continue
+
+			var structure_tile: Node2D = BlockTileScene.instantiate()
+			structure_tile.setup(
+				tile_type,
 				cell,
 				render_origin,
-				_get_tile_visual_height(cell)
+				visual_height,
+				true,
+				false,
+				0,
+				left_face_visible_from_layer,
+				right_face_visible_from_layer
 			)
-			tiles_root.add_child(tile)
+			structure_top_layer.add_child(structure_tile)
+
+			var occlusion_tile: Node2D = BlockTileScene.instantiate()
+			occlusion_tile.setup(
+				tile_type,
+				cell,
+				render_origin,
+				visual_height,
+				false,
+				true,
+				2,
+				left_face_visible_from_layer,
+				right_face_visible_from_layer
+			)
+			occlusion_layer.add_child(occlusion_tile)
 
 
 func _spawn_chest(chest_data: Dictionary) -> void:
@@ -201,7 +245,7 @@ func _spawn_enemies() -> void:
 		enemy.set_render_origin(render_origin)
 		enemy.defeated.connect(_on_enemy_defeated)
 		enemy.engagement_changed.connect(_on_enemy_engagement_changed)
-		enemies_root.add_child(enemy)
+		entity_layer.add_child(enemy)
 		remaining_enemies += 1
 
 	_update_exit_state()
@@ -250,6 +294,17 @@ func _is_in_rects(tile: Vector2i, rects: Array) -> bool:
 func _clear_container(node: Node) -> void:
 	for child in node.get_children():
 		child.queue_free()
+
+
+func get_entity_layer() -> Node2D:
+	return entity_layer
+
+
+func _get_neighbor_structure_height(cell: Vector2i) -> int:
+	var level_size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	if cell.x < 0 or cell.y < 0 or cell.x >= level_size.x or cell.y >= level_size.y:
+		return 0
+	return _get_tile_visual_height(cell)
 
 
 func _get_tile_type(tile: Vector2i, theme: Dictionary) -> String:

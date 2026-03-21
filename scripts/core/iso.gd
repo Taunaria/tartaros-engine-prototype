@@ -6,6 +6,8 @@ const RENDER_TILE_WIDTH := 64.0
 const RENDER_TILE_HEIGHT := 32.0
 const HALF_RENDER_TILE_WIDTH := RENDER_TILE_WIDTH * 0.5
 const HALF_RENDER_TILE_HEIGHT := RENDER_TILE_HEIGHT * 0.5
+const SORT_LAYER_STEP := 10
+const ENTITY_SORT_OFFSET := 6
 
 
 static func tile_to_logic_center(tile: Vector2i) -> Vector2:
@@ -35,6 +37,15 @@ static func render_offset(logic_position: Vector2, render_origin: Vector2) -> Ve
 
 static func sort_key_for_logic(logic_position: Vector2) -> int:
 	return floori(logic_position.x / LOGIC_TILE_SIZE) + floori(logic_position.y / LOGIC_TILE_SIZE)
+
+
+static func tile_sort_base(tile: Vector2i) -> int:
+	return (tile.x + tile.y) * SORT_LAYER_STEP
+
+
+static func entity_sort_z_for_foot(logic_position: Vector2) -> int:
+	var depth_units: float = ((logic_position.x + logic_position.y) / LOGIC_TILE_SIZE) - 1.0
+	return floori(depth_units * SORT_LAYER_STEP) + ENTITY_SORT_OFFSET
 
 
 static func level_render_origin(level_size: Vector2i) -> Vector2:

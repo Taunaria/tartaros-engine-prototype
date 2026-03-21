@@ -60,7 +60,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 
 	move_and_slide()
-	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	_update_attack_hitbox()
 	_update_attack_state()
 
@@ -108,7 +108,7 @@ func set_control_enabled(enabled: bool) -> void:
 
 func set_render_origin(new_render_origin: Vector2) -> void:
 	render_origin = new_render_origin
-	z_index = 1000 + IsoMapper.sort_key_for_logic(global_position)
+	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	queue_redraw()
 
 
@@ -420,6 +420,10 @@ func _is_inside_attack_window(
 
 func _get_render_offset() -> Vector2:
 	return IsoMapper.render_offset(position, render_origin)
+
+
+func _get_sort_anchor_position() -> Vector2:
+	return global_position
 
 
 func _draw_character_shadow(base: Vector2) -> void:

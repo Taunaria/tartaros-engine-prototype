@@ -15,7 +15,8 @@ var run_state: String = "playing"
 var combat_music_active: bool = false
 
 @onready var level_container: Node2D = $LevelContainer
-@onready var player: CharacterBody2D = $Player
+@onready var entity_layer: Node2D = $EntityLayer
+@onready var player: CharacterBody2D = $EntityLayer/Player
 @onready var camera_rig: Node2D = $CameraRig
 @onready var camera: GameCamera = $CameraRig/Camera2D
 @onready var ui: CanvasLayer = $UI
@@ -118,6 +119,7 @@ func complete_demo() -> void:
 
 
 func _load_level(level_index: int) -> void:
+	_clear_world_entities()
 	if current_level != null:
 		current_level.queue_free()
 
@@ -202,3 +204,18 @@ func _refresh_combat_debug_draw() -> void:
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy is Node2D:
 			(enemy as Node2D).queue_redraw()
+
+
+func get_player() -> CharacterBody2D:
+	return player
+
+
+func get_entity_layer() -> Node2D:
+	return entity_layer
+
+
+func _clear_world_entities() -> void:
+	for child in entity_layer.get_children():
+		if child == player:
+			continue
+		child.queue_free()

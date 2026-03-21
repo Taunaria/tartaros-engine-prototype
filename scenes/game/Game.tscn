@@ -18,7 +18,11 @@ level_music_themes = [ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtR
 
 [node name="LevelContainer" type="Node2D" parent="."]
 
-[node name="Player" parent="." instance=ExtResource("2")]
+[node name="EntityLayer" type="Node2D" parent="."]
+z_as_relative = false
+z_index = 1000
+
+[node name="Player" parent="EntityLayer" instance=ExtResource("2")]
 
 [node name="CameraRig" type="Node2D" parent="."]
 
