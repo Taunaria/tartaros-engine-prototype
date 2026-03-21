@@ -7,31 +7,31 @@ const VISUALS := {
 	"player": {
 		"texture_path": "res://assets/textures/characters/generated/player_warrior.png",
 		"draw_size": Vector2(54, 68),
-		"anchor_offset": Vector2(-27, -60),
+		"anchor_offset": Vector2(-27, -57),
 		"shadow_size": Vector2(24, 8),
-		"shadow_offset": Vector2(-12, 4),
+		"shadow_offset": Vector2(-12, 2),
 		"weapon_anchor": Vector2(12, -18)
 	},
 	"zombie": {
 		"texture_path": "res://assets/textures/characters/generated/zombie.png",
 		"draw_size": Vector2(52, 68),
-		"anchor_offset": Vector2(-26, -60),
+		"anchor_offset": Vector2(-26, -57),
 		"shadow_size": Vector2(24, 8),
-		"shadow_offset": Vector2(-12, 4)
+		"shadow_offset": Vector2(-12, 2)
 	},
 	"skeleton": {
 		"texture_path": "res://assets/textures/characters/generated/skeleton.png",
 		"draw_size": Vector2(50, 68),
-		"anchor_offset": Vector2(-25, -60),
+		"anchor_offset": Vector2(-25, -57),
 		"shadow_size": Vector2(22, 7),
-		"shadow_offset": Vector2(-11, 4)
+		"shadow_offset": Vector2(-11, 2)
 	},
 	"boss": {
 		"texture_path": "res://assets/textures/characters/generated/boss_guardian.png",
 		"draw_size": Vector2(74, 86),
-		"anchor_offset": Vector2(-37, -78),
+		"anchor_offset": Vector2(-37, -74),
 		"shadow_size": Vector2(34, 10),
-		"shadow_offset": Vector2(-17, 5)
+		"shadow_offset": Vector2(-17, 3)
 	}
 }
 
