@@ -1,35 +1,37 @@
 extends RefCounted
 class_name CharacterVisuals
 
+static var _texture_cache: Dictionary = {}
+
 const VISUALS := {
 	"player": {
-		"texture": preload("res://assets/textures/characters/player_warrior.svg"),
-		"draw_size": Vector2(40, 50),
-		"anchor_offset": Vector2(-20, -42),
+		"texture_path": "res://assets/textures/characters/generated/player_warrior.png",
+		"draw_size": Vector2(54, 68),
+		"anchor_offset": Vector2(-27, -60),
 		"shadow_size": Vector2(24, 8),
-		"shadow_offset": Vector2(-12, 8),
-		"weapon_anchor": Vector2(8, -10)
+		"shadow_offset": Vector2(-12, 4),
+		"weapon_anchor": Vector2(12, -18)
 	},
 	"zombie": {
-		"texture": preload("res://assets/textures/characters/zombie.svg"),
-		"draw_size": Vector2(42, 52),
-		"anchor_offset": Vector2(-21, -44),
+		"texture_path": "res://assets/textures/characters/generated/zombie.png",
+		"draw_size": Vector2(52, 68),
+		"anchor_offset": Vector2(-26, -60),
 		"shadow_size": Vector2(24, 8),
-		"shadow_offset": Vector2(-12, 8)
+		"shadow_offset": Vector2(-12, 4)
 	},
 	"skeleton": {
-		"texture": preload("res://assets/textures/characters/skeleton.svg"),
-		"draw_size": Vector2(38, 50),
-		"anchor_offset": Vector2(-19, -42),
+		"texture_path": "res://assets/textures/characters/generated/skeleton.png",
+		"draw_size": Vector2(50, 68),
+		"anchor_offset": Vector2(-25, -60),
 		"shadow_size": Vector2(22, 7),
-		"shadow_offset": Vector2(-11, 8)
+		"shadow_offset": Vector2(-11, 4)
 	},
 	"boss": {
-		"texture": preload("res://assets/textures/characters/boss_guardian.svg"),
-		"draw_size": Vector2(58, 68),
-		"anchor_offset": Vector2(-29, -58),
+		"texture_path": "res://assets/textures/characters/generated/boss_guardian.png",
+		"draw_size": Vector2(74, 86),
+		"anchor_offset": Vector2(-37, -78),
 		"shadow_size": Vector2(34, 10),
-		"shadow_offset": Vector2(-17, 10)
+		"shadow_offset": Vector2(-17, 5)
 	}
 }
 
@@ -41,7 +43,19 @@ static func has_visual(visual_id: String) -> bool:
 static func get_texture(visual_id: String) -> Texture2D:
 	if not VISUALS.has(visual_id):
 		return null
-	return VISUALS[visual_id]["texture"]
+	var path: String = VISUALS[visual_id].get("texture_path", "")
+	if path.is_empty():
+		return null
+	if _texture_cache.has(path):
+		return _texture_cache[path]
+	var image := Image.new()
+	var error: Error = image.load(ProjectSettings.globalize_path(path))
+	if error != OK:
+		push_warning("CharacterVisuals: failed to load texture %s" % path)
+		return null
+	var texture := ImageTexture.create_from_image(image)
+	_texture_cache[path] = texture
+	return texture
 
 
 static func get_draw_rect(visual_id: String, base: Vector2) -> Rect2:
