@@ -1,8 +1,6 @@
 extends RefCounted
 class_name CharacterVisuals
 
-const IsoMapper := preload("res://scripts/core/iso.gd")
-
 static var _texture_cache: Dictionary = {}
 static var _texture_analysis_cache: Dictionary = {}
 static var _fallback_warning_cache: Dictionary = {}
@@ -159,7 +157,7 @@ static func vector_to_visual_direction(direction: Vector2) -> String:
 
 
 static func logic_vector_to_visual_direction(direction: Vector2) -> String:
-	return vector_to_visual_direction(IsoMapper.logic_direction_to_screen(direction))
+	return vector_to_visual_direction(direction)
 
 
 static func cardinal_to_visual_direction(direction: Vector2) -> String:
