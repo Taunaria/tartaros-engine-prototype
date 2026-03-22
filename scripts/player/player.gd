@@ -66,6 +66,7 @@ func set_game_ref(game_ref: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_timers(delta)
+	attack_direction = _get_attack_direction_from_mouse()
 
 	_handle_attack_input(delta)
 
@@ -153,8 +154,8 @@ func get_debug_direction_info() -> Dictionary:
 	var view_direction: Vector2 = _get_visual_direction_vector(visual_state)
 	var attack_direction_vector: Vector2 = _get_debug_attack_direction_vector()
 	return {
-		"view_direction_id": CharacterVisuals.logic_vector_to_visual_direction(view_direction),
-		"attack_direction_id": CharacterVisuals.logic_vector_to_visual_direction(attack_direction_vector),
+		"view_direction_id": CharacterVisuals.get_logic_direction_name_for_visual("player", view_direction, visual_state),
+		"attack_direction_id": CharacterVisuals.get_logic_direction_name_for_visual("player", attack_direction_vector, "attack"),
 		"view_direction_vector": view_direction,
 		"attack_direction_vector": attack_direction_vector,
 		"last_input_label": CombatDebug.last_input_label
@@ -266,14 +267,12 @@ func _handle_attack_input(delta: float) -> void:
 	if Input.is_action_just_pressed("attack"):
 		charging_attack = true
 		charge_time = 0.0
-		attack_direction = _get_attack_direction_from_mouse()
 		queue_redraw()
 		return
 
 	if not charging_attack:
 		return
 
-	attack_direction = _get_attack_direction_from_mouse()
 	if Input.is_action_pressed("attack"):
 		charge_time = minf(charge_time + delta, max_charge_duration)
 		queue_redraw()
@@ -287,7 +286,6 @@ func _handle_attack_input(delta: float) -> void:
 
 
 func _start_attack() -> void:
-	attack_direction = _get_attack_direction_from_mouse()
 	current_attack_charge_ratio = _get_charge_ratio()
 	current_attack_weapon = _build_attack_weapon(get_current_weapon(), current_attack_charge_ratio)
 	if game != null and game.has_method("play_sfx"):
@@ -512,7 +510,14 @@ func _draw_character_visual(base: Vector2) -> void:
 	var visual_frame_id: String = _get_visual_frame_id(visual_state)
 	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", visual_direction, visual_state, base, visual_frame_id)
 	if debug_attack or CombatDebug.enabled:
-		print("DIR:", visual_direction, "STATE:", visual_state, "ANIM:", texture_data.get("animation_frame_name", CharacterVisuals.get_animation_frame_name(visual_state, visual_direction, visual_frame_id)))
+		print(
+			"STATE:",
+			visual_state,
+			"DIR:",
+			visual_direction,
+			"PLAY:",
+			texture_data.get("animation_frame_name", CharacterVisuals.get_animation_frame_name(visual_state, visual_direction, visual_frame_id))
+		)
 	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return
@@ -541,21 +546,18 @@ func _get_visual_state() -> String:
 
 
 func _get_visual_direction_id(visual_state: String = "") -> String:
-	return CharacterVisuals.logic_vector_to_visual_direction(_get_visual_direction_vector(visual_state))
+	if visual_state.is_empty():
+		visual_state = _get_visual_state()
+	return CharacterVisuals.get_logic_direction_name_for_visual("player", _get_visual_direction_vector(visual_state), visual_state)
 
 
 func _get_visual_direction_vector(visual_state: String = "") -> Vector2:
 	if visual_state.is_empty():
 		visual_state = _get_visual_state()
 
-	var source_direction: Vector2 = attack_direction if visual_state == "attack" else velocity
-	if visual_state != "attack" and movement_direction_hold_timer > 0.0 and movement_direction_hold_vector.length_squared() > 0.001:
-		source_direction = movement_direction_hold_vector
-	if source_direction.length_squared() <= 0.001:
-		source_direction = last_direction
-	if source_direction.length_squared() <= 0.001:
-		return Vector2.DOWN
-	return source_direction.normalized()
+	if visual_state == "attack":
+		return _get_aim_direction_vector()
+	return _get_movement_direction_vector()
 
 
 func _get_visual_frame_id(visual_state: String) -> String:
@@ -583,6 +585,22 @@ func _get_attack_direction_from_mouse() -> Vector2:
 	if last_direction.length_squared() > 0.001:
 		return last_direction.normalized()
 	return Vector2.DOWN
+
+
+func _get_movement_direction_vector() -> Vector2:
+	if movement_direction_hold_timer > 0.0 and movement_direction_hold_vector.length_squared() > 0.001:
+		return movement_direction_hold_vector.normalized()
+	if velocity.length_squared() > 0.001:
+		return velocity.normalized()
+	if last_direction.length_squared() > 0.001:
+		return last_direction.normalized()
+	return Vector2.DOWN
+
+
+func _get_aim_direction_vector() -> Vector2:
+	if attack_direction.length_squared() > 0.001:
+		return attack_direction.normalized()
+	return _get_attack_direction_from_mouse()
 
 
 func _is_sprinting() -> bool:

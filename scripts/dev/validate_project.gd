@@ -28,7 +28,9 @@ func _initialize() -> void:
 func _validate_character_animation_frames() -> bool:
 	var validation_failed: bool = false
 	for visual_id in VISUAL_IDS:
+		print("VISUAL:", visual_id, "ANIMATIONS:", CharacterVisuals.get_animation_names(visual_id))
 		for direction_id in DIRECTION_IDS:
+			print("%s walk_%s frames: %d" % [visual_id, direction_id, CharacterVisuals.get_animation_frame_count(visual_id, direction_id, "walk")])
 			for state_id in STATE_IDS:
 				var frame_count: int = CharacterVisuals.get_animation_frame_count(visual_id, direction_id, state_id)
 				if state_id == "walk":

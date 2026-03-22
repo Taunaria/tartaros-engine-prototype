@@ -897,11 +897,18 @@ func _draw_character_shadow(base: Vector2) -> void:
 
 func _draw_character_visual(base: Vector2) -> void:
 	var visual_state: String = _get_visual_state()
-	var visual_direction: String = CharacterVisuals.logic_vector_to_visual_direction(facing_direction)
+	var visual_direction: String = CharacterVisuals.get_logic_direction_name_for_visual(enemy_type, facing_direction, visual_state)
 	var visual_frame_id: String = _get_visual_frame_id(visual_state)
 	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data(enemy_type, visual_direction, visual_state, base, visual_frame_id)
 	if CombatDebug.enabled:
-		print("DIR:", visual_direction, "STATE:", visual_state, "ANIM:", texture_data.get("animation_frame_name", CharacterVisuals.get_animation_frame_name(visual_state, visual_direction, visual_frame_id)))
+		print(
+			"STATE:",
+			visual_state,
+			"DIR:",
+			visual_direction,
+			"PLAY:",
+			texture_data.get("animation_frame_name", CharacterVisuals.get_animation_frame_name(visual_state, visual_direction, visual_frame_id))
+		)
 	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return

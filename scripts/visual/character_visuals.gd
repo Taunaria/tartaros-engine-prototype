@@ -1,17 +1,22 @@
 extends RefCounted
 class_name CharacterVisuals
 
+const IsoMapper := preload("res://scripts/core/iso.gd")
 static var _texture_cache: Dictionary = {}
 static var _texture_analysis_cache: Dictionary = {}
 static var _fallback_warning_cache: Dictionary = {}
 const DIRECTION_IDS := ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 const LEGACY_DIRECTION_IDS := ["dr", "ul", "ur", "dl"]
 const STATE_IDS := ["idle", "walk", "attack", "hit", "death"]
-const LEGACY_DIRECTION_MAP := {
-	"down_right": "dr",
-	"up_left": "ul",
-	"up_right": "ur",
-	"down_left": "dl"
+const DIRECTION_VECTORS := {
+	"up": Vector2.UP,
+	"down": Vector2.DOWN,
+	"left": Vector2.LEFT,
+	"right": Vector2.RIGHT,
+	"up_left": Vector2(-1.0, -1.0),
+	"up_right": Vector2(1.0, -1.0),
+	"down_left": Vector2(-1.0, 1.0),
+	"down_right": Vector2(1.0, 1.0)
 }
 
 const VISUALS := {
@@ -110,58 +115,74 @@ static func has_state_texture(visual_id: String, direction_id: String, state_id:
 	if not VISUALS.has(visual_id):
 		return false
 	var entry: Dictionary = VISUALS[visual_id]
-	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id, frame_id)
-	if direction_path.is_empty():
-		return false
-	return FileAccess.file_exists(ProjectSettings.globalize_path(direction_path))
+	return not _get_valid_directional_texture_path(entry, direction_id, state_id, frame_id).is_empty()
+
+
+static func get_direction_name(dir: Vector2) -> String:
+	if dir.length() < 0.1:
+		return "down"
+
+	var angle = atan2(dir.y, dir.x)
+	var deg = rad_to_deg(angle)
+
+	if deg < 0.0:
+		deg += 360.0
+
+	if deg >= 337.5 or deg < 22.5:
+		return "right"
+	elif deg < 67.5:
+		return "down_right"
+	elif deg < 112.5:
+		return "down"
+	elif deg < 157.5:
+		return "down_left"
+	elif deg < 202.5:
+		return "left"
+	elif deg < 247.5:
+		return "up_left"
+	elif deg < 292.5:
+		return "up"
+	else:
+		return "up_right"
 
 
 static func vector_to_visual_direction(direction: Vector2) -> String:
-	if direction.length_squared() <= 0.001:
-		return "down"
-	var dir := direction.normalized()
-	var dir_name := ""
-
-	if absf(dir.x) > absf(dir.y):
-		if dir.x > 0.0:
-			if dir.y > 0.0:
-				dir_name = "down_right"
-			elif dir.y < 0.0:
-				dir_name = "up_right"
-			else:
-				dir_name = "right"
-		else:
-			if dir.y > 0.0:
-				dir_name = "down_left"
-			elif dir.y < 0.0:
-				dir_name = "up_left"
-			else:
-				dir_name = "left"
-	else:
-		if dir.y > 0.0:
-			if dir.x > 0.0:
-				dir_name = "down_right"
-			elif dir.x < 0.0:
-				dir_name = "down_left"
-			else:
-				dir_name = "down"
-		else:
-			if dir.x > 0.0:
-				dir_name = "up_right"
-			elif dir.x < 0.0:
-				dir_name = "up_left"
-			else:
-				dir_name = "up"
-
-	return dir_name
+	return get_direction_name(direction)
 
 
 static func logic_vector_to_visual_direction(direction: Vector2) -> String:
-	return vector_to_visual_direction(IsoMapper.logic_direction_to_screen(direction))
+	return get_direction_name(IsoMapper.logic_direction_to_screen(direction))
 
 
 static func cardinal_to_visual_direction(direction: Vector2) -> String:
-	return vector_to_visual_direction(direction)
+	return get_direction_name(direction)
+
+
+static func get_logic_direction_name_for_visual(visual_id: String, direction: Vector2, state_id: String) -> String:
+	return get_best_direction_name_for_visual(visual_id, IsoMapper.logic_direction_to_screen(direction), state_id)
+
+
+static func get_screen_direction_name_for_visual(visual_id: String, direction: Vector2, state_id: String) -> String:
+	return get_best_direction_name_for_visual(visual_id, direction, state_id)
+
+
+static func get_best_direction_name_for_visual(visual_id: String, screen_direction: Vector2, state_id: String) -> String:
+	var requested_direction_id: String = get_direction_name(screen_direction)
+	if not VISUALS.has(visual_id):
+		return requested_direction_id
+	if _has_direction_animation(visual_id, requested_direction_id, state_id):
+		return requested_direction_id
+
+	var best_direction_id: String = _find_best_available_direction_id(visual_id, screen_direction, state_id)
+	if not best_direction_id.is_empty():
+		return best_direction_id
+
+	if state_id != "idle":
+		best_direction_id = _find_best_available_direction_id(visual_id, screen_direction, "idle")
+		if not best_direction_id.is_empty():
+			return best_direction_id
+
+	return requested_direction_id
 
 
 static func get_animation_name(state_id: String, direction_id: String) -> String:
@@ -193,6 +214,39 @@ static func has_animation_frames(visual_id: String, direction_id: String, state_
 	return frame_count >= 2 if state_id == "walk" else frame_count >= 1
 
 
+static func get_animation_names(visual_id: String) -> PackedStringArray:
+	var names: PackedStringArray = []
+	if not VISUALS.has(visual_id):
+		return names
+	for state_id in STATE_IDS:
+		for direction_id in DIRECTION_IDS:
+			names.append(get_animation_name(state_id, direction_id))
+	return names
+
+
+static func _has_direction_animation(visual_id: String, direction_id: String, state_id: String) -> bool:
+	if state_id == "walk":
+		return has_animation_frames(visual_id, direction_id, state_id)
+	return has_state_texture(visual_id, direction_id, state_id)
+
+
+static func _find_best_available_direction_id(visual_id: String, screen_direction: Vector2, state_id: String) -> String:
+	var target_direction: Vector2 = screen_direction.normalized() if screen_direction.length_squared() > 0.001 else Vector2.DOWN
+	var best_direction_id: String = ""
+	var best_score: float = -2.0
+
+	for candidate_direction_id in DIRECTION_IDS:
+		if not _has_direction_animation(visual_id, candidate_direction_id, state_id):
+			continue
+		var candidate_direction: Vector2 = DIRECTION_VECTORS.get(candidate_direction_id, Vector2.DOWN).normalized()
+		var score: float = target_direction.dot(candidate_direction)
+		if score > best_score:
+			best_score = score
+			best_direction_id = candidate_direction_id
+
+	return best_direction_id
+
+
 static func _get_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
 	var prefix: String = entry.get("directional_prefix", "")
 	if prefix.is_empty():
@@ -205,33 +259,65 @@ static func _get_directional_texture_path(entry: Dictionary, direction_id: Strin
 
 
 static func _resolve_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
-	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id, frame_id)
+	var requested_animation: String = get_animation_frame_name(state_id, direction_id, frame_id)
+	var direction_path: String = _get_valid_directional_texture_path(entry, direction_id, state_id, frame_id)
 	if not direction_path.is_empty():
-		var directional_texture: Texture2D = _load_texture(direction_path)
-		if directional_texture != null:
-			return direction_path
-		_warn_missing_texture(direction_path, entry.get("default_texture_path", ""))
-	elif not state_id.is_empty() or not direction_id.is_empty():
-		_warn_missing_texture("%s_%s" % [state_id, direction_id], entry.get("default_texture_path", ""))
-	var legacy_path: String = _get_legacy_directional_texture_path(entry, direction_id, state_id)
-	if not legacy_path.is_empty():
-		var legacy_texture: Texture2D = _load_texture(legacy_path)
-		if legacy_texture != null:
-			return legacy_path
-		_warn_missing_texture(legacy_path, entry.get("default_texture_path", ""))
+		return direction_path
+
+	for fallback_direction_id in _get_direction_fallback_candidates(direction_id):
+		var fallback_path: String = _get_valid_directional_texture_path(entry, fallback_direction_id, state_id, frame_id)
+		if not fallback_path.is_empty():
+			_warn_missing_texture(requested_animation, fallback_path)
+			return fallback_path
+
+	if state_id != "idle":
+		var idle_same_direction_path: String = _get_valid_directional_texture_path(entry, direction_id, "idle")
+		if not idle_same_direction_path.is_empty():
+			_warn_missing_texture(requested_animation, idle_same_direction_path)
+			return idle_same_direction_path
+
+		for fallback_direction_id in _get_direction_fallback_candidates(direction_id):
+			var idle_fallback_path: String = _get_valid_directional_texture_path(entry, fallback_direction_id, "idle")
+			if not idle_fallback_path.is_empty():
+				_warn_missing_texture(requested_animation, idle_fallback_path)
+				return idle_fallback_path
+
+	_warn_missing_texture(requested_animation, entry.get("default_texture_path", ""))
 	return entry.get("default_texture_path", "")
 
 
-static func _get_legacy_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String) -> String:
-	var prefix: String = entry.get("directional_prefix", "")
-	if prefix.is_empty():
+static func _get_valid_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
+	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id, frame_id)
+	if direction_path.is_empty():
 		return ""
-	if state_id != "idle" and state_id != "attack":
+	if _load_texture(direction_path) == null:
 		return ""
-	var legacy_direction_id: String = LEGACY_DIRECTION_MAP.get(direction_id, "")
-	if legacy_direction_id.is_empty():
+	var analysis: Dictionary = _get_texture_analysis(direction_path)
+	if not _is_texture_analysis_usable(analysis):
 		return ""
-	return "res://assets/textures/characters/directional/%s_%s_%s.png" % [prefix, state_id, legacy_direction_id]
+	return direction_path
+
+
+static func _get_direction_fallback_candidates(direction_id: String) -> Array[String]:
+	match direction_id:
+		"up":
+			return ["up_left", "up_right", "left", "right", "down"]
+		"down":
+			return ["down_left", "down_right", "left", "right", "up"]
+		"left":
+			return ["up_left", "down_left", "up", "down", "right"]
+		"right":
+			return ["up_right", "down_right", "up", "down", "left"]
+		"up_left":
+			return ["up", "left", "up_right", "down_left", "down_right"]
+		"up_right":
+			return ["up", "right", "up_left", "down_right", "down_left"]
+		"down_left":
+			return ["down", "left", "up_left", "down_right", "up_right"]
+		"down_right":
+			return ["down", "right", "up_right", "down_left", "up_left"]
+		_:
+			return ["down"]
 
 
 static func _load_texture(path: String) -> Texture2D:
@@ -283,8 +369,29 @@ static func _get_texture_analysis(path: String) -> Dictionary:
 	if error != OK:
 		return {}
 	var used_rect: Rect2i = image.get_used_rect()
-	if used_rect.size.x <= 0 or used_rect.size.y <= 0:
+	var has_visible_pixels: bool = used_rect.size.x > 0 and used_rect.size.y > 0
+	if not has_visible_pixels:
 		used_rect = Rect2i(Vector2i.ZERO, image.get_size())
+	var image_size: Vector2i = image.get_size()
+	var opaque_corner_count: int = 0
+	var corner_samples := [
+		Vector2i(0, 0),
+		Vector2i(max(image_size.x - 1, 0), 0),
+		Vector2i(0, max(image_size.y - 1, 0)),
+		Vector2i(max(image_size.x - 1, 0), max(image_size.y - 1, 0))
+	]
+	for sample in corner_samples:
+		if image.get_pixelv(sample).a > 0.03:
+			opaque_corner_count += 1
+	var touching_edge_count: int = 0
+	if used_rect.position.x <= 1:
+		touching_edge_count += 1
+	if used_rect.position.y <= 1:
+		touching_edge_count += 1
+	if used_rect.end.x >= image_size.x - 1:
+		touching_edge_count += 1
+	if used_rect.end.y >= image_size.y - 1:
+		touching_edge_count += 1
 	var row_counts: Array[int] = []
 	var max_row_count: int = 0
 	for y in range(used_rect.position.y, used_rect.end.y):
@@ -320,12 +427,36 @@ static func _get_texture_analysis(path: String) -> Dictionary:
 		body_center_x = centers[centers.size() / 2]
 	var analysis := {
 		"mtime": modified_time,
+		"image_size": image_size,
+		"has_visible_pixels": has_visible_pixels,
+		"opaque_corner_count": opaque_corner_count,
+		"touching_edge_count": touching_edge_count,
 		"source_rect": Rect2(used_rect.position, used_rect.size),
 		"body_height": body_height,
 		"body_center_x": body_center_x
 	}
 	_texture_analysis_cache[path] = analysis
 	return analysis
+
+
+static func _is_texture_analysis_usable(analysis: Dictionary) -> bool:
+	if analysis.is_empty():
+		return false
+	if not analysis.get("has_visible_pixels", true):
+		return false
+
+	var source_rect: Rect2 = analysis.get("source_rect", Rect2())
+	var image_size: Vector2i = analysis.get("image_size", Vector2i.ZERO)
+	var fills_entire_canvas: bool = source_rect.position.is_zero_approx() and int(source_rect.size.x) == image_size.x and int(source_rect.size.y) == image_size.y
+	var image_area: float = maxf(float(image_size.x * image_size.y), 1.0)
+	var source_area_ratio: float = (source_rect.size.x * source_rect.size.y) / image_area
+	if fills_entire_canvas and int(analysis.get("opaque_corner_count", 0)) >= 3:
+		return false
+	if int(analysis.get("touching_edge_count", 0)) >= 2:
+		return false
+	if int(analysis.get("touching_edge_count", 0)) >= 1 and source_area_ratio >= 0.8:
+		return false
+	return true
 
 
 static func get_draw_rect(visual_id: String, base: Vector2) -> Rect2:
