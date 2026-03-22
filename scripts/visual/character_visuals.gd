@@ -1,8 +1,11 @@
 extends RefCounted
 class_name CharacterVisuals
 
+const IsoMapper := preload("res://scripts/core/iso.gd")
+
 static var _texture_cache: Dictionary = {}
 static var _texture_analysis_cache: Dictionary = {}
+static var _fallback_warning_cache: Dictionary = {}
 const DIRECTION_IDS := ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
 const LEGACY_DIRECTION_IDS := ["dr", "ul", "ur", "dl"]
 const STATE_IDS := ["idle", "walk", "attack", "hit", "death"]
@@ -76,6 +79,7 @@ static func get_state_texture_draw_data(visual_id: String, direction_id: String,
 		return {}
 	var texture: Texture2D = _load_texture(path)
 	if texture == null:
+		_warn_missing_texture(path, "")
 		return {}
 	var analysis: Dictionary = _get_texture_analysis(path)
 	var base_rect: Rect2 = get_draw_rect(visual_id, base)
@@ -87,6 +91,8 @@ static func get_state_texture_draw_data(visual_id: String, direction_id: String,
 	var scale: float = desired_body_height / body_height
 	var draw_size: Vector2 = source_rect.size * scale
 	var body_center_x: float = float(analysis.get("body_center_x", source_rect.size.x * 0.5))
+	var animation_name: String = get_animation_name(state_id, direction_id)
+	var animation_frame_name: String = get_animation_frame_name(state_id, direction_id, frame_id)
 	var draw_position := Vector2(
 		desired_center_x - body_center_x * scale,
 		desired_bottom - draw_size.y
@@ -94,7 +100,11 @@ static func get_state_texture_draw_data(visual_id: String, direction_id: String,
 	return {
 		"texture": texture,
 		"source_rect": source_rect,
-		"draw_rect": Rect2(draw_position, draw_size)
+		"draw_rect": Rect2(draw_position, draw_size),
+		"animation_name": animation_name,
+		"animation_frame_name": animation_frame_name,
+		"direction_id": direction_id,
+		"state_id": state_id
 	}
 
 
@@ -111,26 +121,78 @@ static func has_state_texture(visual_id: String, direction_id: String, state_id:
 static func vector_to_visual_direction(direction: Vector2) -> String:
 	if direction.length_squared() <= 0.001:
 		return "down"
-	var angle: float = direction.angle()
-	if angle >= -PI * 0.125 and angle < PI * 0.125:
-		return "right"
-	if angle >= PI * 0.125 and angle < PI * 0.375:
-		return "down_right"
-	if angle >= PI * 0.375 and angle < PI * 0.625:
-		return "down"
-	if angle >= PI * 0.625 and angle < PI * 0.875:
-		return "down_left"
-	if angle >= PI * 0.875 or angle < -PI * 0.875:
-		return "left"
-	if angle >= -PI * 0.875 and angle < -PI * 0.625:
-		return "up_left"
-	if angle >= -PI * 0.625 and angle < -PI * 0.375:
-		return "up"
-	return "up_right"
+	var dir := direction.normalized()
+	var dir_name := ""
+
+	if absf(dir.x) > absf(dir.y):
+		if dir.x > 0.0:
+			if dir.y > 0.0:
+				dir_name = "down_right"
+			elif dir.y < 0.0:
+				dir_name = "up_right"
+			else:
+				dir_name = "right"
+		else:
+			if dir.y > 0.0:
+				dir_name = "down_left"
+			elif dir.y < 0.0:
+				dir_name = "up_left"
+			else:
+				dir_name = "left"
+	else:
+		if dir.y > 0.0:
+			if dir.x > 0.0:
+				dir_name = "down_right"
+			elif dir.x < 0.0:
+				dir_name = "down_left"
+			else:
+				dir_name = "down"
+		else:
+			if dir.x > 0.0:
+				dir_name = "up_right"
+			elif dir.x < 0.0:
+				dir_name = "up_left"
+			else:
+				dir_name = "up"
+
+	return dir_name
+
+
+static func logic_vector_to_visual_direction(direction: Vector2) -> String:
+	return vector_to_visual_direction(IsoMapper.logic_direction_to_screen(direction))
 
 
 static func cardinal_to_visual_direction(direction: Vector2) -> String:
 	return vector_to_visual_direction(direction)
+
+
+static func get_animation_name(state_id: String, direction_id: String) -> String:
+	return "%s_%s" % [state_id, direction_id]
+
+
+static func get_animation_frame_name(state_id: String, direction_id: String, frame_id: String = "") -> String:
+	var animation_name: String = get_animation_name(state_id, direction_id)
+	if frame_id.is_empty():
+		return animation_name
+	return "%s_%s" % [animation_name, frame_id]
+
+
+static func get_animation_frame_count(visual_id: String, direction_id: String, state_id: String) -> int:
+	if not VISUALS.has(visual_id):
+		return 0
+	if state_id == "walk":
+		var frame_count: int = 0
+		if has_state_texture(visual_id, direction_id, state_id, "1"):
+			frame_count += 1
+		if has_state_texture(visual_id, direction_id, state_id, "2"):
+			frame_count += 1
+		return frame_count
+	return 1 if has_state_texture(visual_id, direction_id, state_id) else 0
+
+
+static func has_animation_frames(visual_id: String, direction_id: String, state_id: String) -> bool:
+	var frame_count: int = get_animation_frame_count(visual_id, direction_id, state_id)
+	return frame_count >= 2 if state_id == "walk" else frame_count >= 1
 
 
 static func _get_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
@@ -138,11 +200,10 @@ static func _get_directional_texture_path(entry: Dictionary, direction_id: Strin
 	if prefix.is_empty():
 		return ""
 	if not DIRECTION_IDS.has(direction_id):
-		direction_id = "down_right"
+		return ""
 	if not STATE_IDS.has(state_id):
-		state_id = "idle"
-	var frame_suffix: String = "_%s" % frame_id if not frame_id.is_empty() else ""
-	return "res://assets/textures/characters/extended/%s_%s_%s%s.png" % [prefix, state_id, direction_id, frame_suffix]
+		return ""
+	return "res://assets/textures/characters/extended/%s_%s.png" % [prefix, get_animation_frame_name(state_id, direction_id, frame_id)]
 
 
 static func _resolve_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
@@ -151,11 +212,15 @@ static func _resolve_texture_path(entry: Dictionary, direction_id: String, state
 		var directional_texture: Texture2D = _load_texture(direction_path)
 		if directional_texture != null:
 			return direction_path
+		_warn_missing_texture(direction_path, entry.get("default_texture_path", ""))
+	elif not state_id.is_empty() or not direction_id.is_empty():
+		_warn_missing_texture("%s_%s" % [state_id, direction_id], entry.get("default_texture_path", ""))
 	var legacy_path: String = _get_legacy_directional_texture_path(entry, direction_id, state_id)
 	if not legacy_path.is_empty():
 		var legacy_texture: Texture2D = _load_texture(legacy_path)
 		if legacy_texture != null:
 			return legacy_path
+		_warn_missing_texture(legacy_path, entry.get("default_texture_path", ""))
 	return entry.get("default_texture_path", "")
 
 
@@ -194,6 +259,17 @@ static func _load_texture(path: String) -> Texture2D:
 		"texture": texture
 	}
 	return texture
+
+
+static func _warn_missing_texture(path: String, fallback_path: String) -> void:
+	var cache_key: String = "%s|%s" % [path, fallback_path]
+	if _fallback_warning_cache.has(cache_key):
+		return
+	_fallback_warning_cache[cache_key] = true
+	if fallback_path.is_empty():
+		push_warning("CharacterVisuals: missing texture %s" % path)
+		return
+	push_warning("CharacterVisuals: missing texture %s, falling back to %s" % [path, fallback_path])
 
 
 static func _get_texture_analysis(path: String) -> Dictionary:

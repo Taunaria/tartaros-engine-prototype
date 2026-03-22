@@ -143,6 +143,19 @@ func get_visual_position() -> Vector2:
 	return IsoMapper.logic_to_screen(global_position, render_origin)
 
 
+func get_debug_direction_info() -> Dictionary:
+	var visual_state: String = _get_visual_state()
+	var view_direction: Vector2 = _get_visual_direction_vector(visual_state)
+	var attack_direction_vector: Vector2 = _get_debug_attack_direction_vector()
+	return {
+		"view_direction_id": CharacterVisuals.logic_vector_to_visual_direction(view_direction),
+		"attack_direction_id": CharacterVisuals.logic_vector_to_visual_direction(attack_direction_vector),
+		"view_direction_vector": view_direction,
+		"attack_direction_vector": attack_direction_vector,
+		"last_input_label": CombatDebug.last_input_label
+	}
+
+
 func unlock_weapon(weapon_id: String, silent: bool = false) -> bool:
 	var weapon_data = WeaponDB.get_weapon(weapon_id)
 	if weapon_data == null or weapon_inventory.has(weapon_data.id):
@@ -445,6 +458,10 @@ func refresh_combat_debug_draw() -> void:
 			(node as Node2D).queue_redraw()
 
 
+func refresh_direction_debug_draw() -> void:
+	queue_redraw()
+
+
 func _logic_to_local_screen(logic_position: Vector2) -> Vector2:
 	return IsoMapper.logic_to_screen(logic_position, render_origin) - global_position
 
@@ -473,7 +490,11 @@ func _draw_character_shadow(base: Vector2) -> void:
 
 func _draw_character_visual(base: Vector2) -> void:
 	var visual_state: String = _get_visual_state()
-	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", _get_visual_direction_id(), visual_state, base, _get_visual_frame_id(visual_state))
+	var visual_direction: String = _get_visual_direction_id(visual_state)
+	var visual_frame_id: String = _get_visual_frame_id(visual_state)
+	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", visual_direction, visual_state, base, visual_frame_id)
+	if debug_attack or CombatDebug.enabled:
+		print("DIR:", visual_direction, "STATE:", visual_state, "ANIM:", texture_data.get("animation_frame_name", CharacterVisuals.get_animation_frame_name(visual_state, visual_direction, visual_frame_id)))
 	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return
@@ -485,6 +506,8 @@ func _draw_character_visual(base: Vector2) -> void:
 	if charging_attack:
 		draw_rect = _scale_rect_from_bottom_center(draw_rect, 1.0 + _get_charge_ratio() * charge_visual_scale_bonus)
 	draw_texture_rect_region(texture, draw_rect, texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
+	if CombatDebug.direction_overlay_enabled:
+		_draw_direction_debug_arrows(draw_rect)
 
 
 func _get_visual_state() -> String:
@@ -492,18 +515,27 @@ func _get_visual_state() -> String:
 		return "death"
 	if hit_stun_timer > 0.0 or hit_timer > 0.0:
 		return "hit"
-	if attack_active_timer > 0.0 or attack_recovery_timer > 0.0 or charging_attack:
+	if _is_attack_visual_state():
 		return "attack"
-	if velocity.length_squared() > 9.0:
+	if velocity.length() > 5.0:
 		return "walk"
 	return "idle"
 
 
-func _get_visual_direction_id() -> String:
-	var source_direction: Vector2 = attack_direction if attack_active_timer > 0.0 or charging_attack else velocity
+func _get_visual_direction_id(visual_state: String = "") -> String:
+	return CharacterVisuals.logic_vector_to_visual_direction(_get_visual_direction_vector(visual_state))
+
+
+func _get_visual_direction_vector(visual_state: String = "") -> Vector2:
+	if visual_state.is_empty():
+		visual_state = _get_visual_state()
+
+	var source_direction: Vector2 = attack_direction if visual_state == "attack" else velocity
 	if source_direction.length_squared() <= 0.001:
 		source_direction = last_direction
-	return CharacterVisuals.vector_to_visual_direction(source_direction)
+	if source_direction.length_squared() <= 0.001:
+		return Vector2.DOWN
+	return source_direction.normalized()
 
 
 func _get_visual_frame_id(visual_state: String) -> String:
@@ -517,6 +549,10 @@ func _update_walk_animation(delta: float) -> void:
 		walk_anim_timer += delta
 		return
 	walk_anim_timer = 0.0
+
+
+func _is_attack_visual_state() -> bool:
+	return attack_active_timer > 0.0 or charging_attack
 
 
 func _get_attack_direction_from_mouse() -> Vector2:
@@ -586,6 +622,55 @@ func _scale_rect_from_bottom_center(rect: Rect2, scale_factor: float) -> Rect2:
 		),
 		scaled_size
 	)
+
+
+func _get_debug_attack_direction_vector() -> Vector2:
+	if attack_direction.length_squared() > 0.001:
+		return attack_direction.normalized()
+	if last_direction.length_squared() > 0.001:
+		return last_direction.normalized()
+	return Vector2.DOWN
+
+
+func _draw_direction_debug_arrows(character_rect: Rect2) -> void:
+	var debug_rect: Rect2 = character_rect.grow(2.0)
+	var center: Vector2 = debug_rect.get_center()
+	var reach: float = maxf(debug_rect.size.x, debug_rect.size.y) * 0.5 + 14.0
+	var view_direction: Vector2 = _get_visual_direction_vector()
+	var attack_direction_vector: Vector2 = _get_debug_attack_direction_vector()
+	var view_screen_direction: Vector2 = IsoMapper.logic_direction_to_screen(view_direction)
+	var attack_screen_direction: Vector2 = IsoMapper.logic_direction_to_screen(attack_direction_vector)
+	var view_origin: Vector2 = center + view_screen_direction * reach
+	var attack_origin: Vector2 = center + attack_screen_direction * (reach + 8.0)
+	_draw_debug_arrow(view_origin, view_screen_direction, Color(0.2, 0.62, 1.0, 0.95), 40.0, 8.0)
+	_draw_debug_arrow(attack_origin, attack_screen_direction, Color(1.0, 0.25, 0.3, 0.95), 34.0, 8.5)
+
+
+func _draw_debug_arrow(origin: Vector2, direction: Vector2, color: Color, length: float, line_width: float) -> void:
+	if direction.length_squared() <= 0.001:
+		return
+
+	var dir: Vector2 = direction.normalized()
+	var perp: Vector2 = Vector2(-dir.y, dir.x)
+	var shaft_length: float = length * 0.68
+	var shaft_end: Vector2 = origin + dir * shaft_length
+	var tip: Vector2 = origin + dir * length
+	var head_half_width: float = line_width * 1.25
+	var outline_expand: float = 1.75
+	var outline_head := PackedVector2Array([
+		shaft_end + perp * (head_half_width + outline_expand),
+		tip + dir * outline_expand,
+		shaft_end - perp * (head_half_width + outline_expand)
+	])
+	var head := PackedVector2Array([
+		shaft_end + perp * head_half_width,
+		tip,
+		shaft_end - perp * head_half_width
+	])
+	draw_line(origin, shaft_end, Color(0, 0, 0, 0.45), line_width + 3.0, true)
+	draw_colored_polygon(outline_head, Color(0, 0, 0, 0.45))
+	draw_line(origin, shaft_end, color, line_width, true)
+	draw_colored_polygon(head, color)
 
 
 func get_attack_charge_ratio() -> float:

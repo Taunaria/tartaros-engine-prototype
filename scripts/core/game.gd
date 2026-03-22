@@ -52,17 +52,28 @@ func _process(_delta: float) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	CombatDebug.register_last_input(event)
+
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key_event := event as InputEventKey
 		if key_event.keycode == KEY_F3 or key_event.physical_keycode == KEY_F3:
 			var enabled: bool = CombatDebug.toggle()
 			print("combat_debug=%s" % enabled)
 			_refresh_combat_debug_draw()
+			_refresh_direction_debug_draw()
 			get_viewport().set_input_as_handled()
 		elif key_event.keycode == KEY_F7 or key_event.physical_keycode == KEY_F7:
 			var enemy_logic_enabled: bool = CombatDebug.toggle_enemy_logic()
 			print("enemy_logic=%s" % enemy_logic_enabled)
 			_refresh_combat_debug_draw()
+			_refresh_direction_debug_draw()
+			get_viewport().set_input_as_handled()
+		elif key_event.keycode == KEY_F10 or key_event.physical_keycode == KEY_F10:
+			var direction_overlay_enabled: bool = CombatDebug.toggle_direction_overlay()
+			print("direction_overlay=%s" % direction_overlay_enabled)
+			_refresh_direction_debug_draw()
+			if ui != null and is_instance_valid(ui) and ui.has_method("refresh_direction_debug_overlay"):
+				ui.refresh_direction_debug_overlay()
 			get_viewport().set_input_as_handled()
 
 
@@ -259,6 +270,11 @@ func _on_player_died() -> void:
 		current_level.set_active(false)
 	set_combat_music_active(false)
 	ui.show_death_screen()
+
+
+func _refresh_direction_debug_draw() -> void:
+	if player != null and is_instance_valid(player) and player.has_method("refresh_direction_debug_draw"):
+		player.refresh_direction_debug_draw()
 
 
 func _on_difficulty_selected(difficulty_id: String, multiplier: float) -> void:

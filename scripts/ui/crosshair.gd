@@ -2,14 +2,16 @@ extends Sprite2D
 
 const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 
+@export var target_display_size := 112.0
 @export var pulse_speed := 4.0
 @export var pulse_amplitude := 0.05
-@export var target_display_size := 112.0
 
 var pulse_time := 0.0
-var current_scale := 1.0
-var current_tint := Color8(235, 242, 255)
-var base_scale := 0.109375
+var base_scale := 1.0
+var hover_scale_bonus := 0.0
+var attack_scale_bonus := 0.0
+var charge_scale_bonus := 0.0
+var current_tint := Color.WHITE
 
 
 func _ready() -> void:
@@ -22,6 +24,7 @@ func _ready() -> void:
 		texture = _make_fallback_texture()
 	base_scale = target_display_size / maxf(1.0, float(texture.get_width()))
 	scale = Vector2.ONE * base_scale
+	modulate = Color.WHITE
 	visible = true
 
 
@@ -33,17 +36,21 @@ func _process(delta: float) -> void:
 
 func _update_feedback() -> void:
 	var pulse_scale: float = 1.0 + sin(pulse_time * pulse_speed) * pulse_amplitude
+	var player: Node = _get_player()
 	var charge_ratio: float = 0.0
 	var attack_ratio: float = 0.0
-	var hover_ratio: float = _get_hover_enemy_ratio()
-	var player: Node = _get_player()
 	if player != null:
 		if player.has_method("get_attack_charge_ratio"):
 			charge_ratio = player.get_attack_charge_ratio()
 		if player.has_method("get_attack_feedback_ratio"):
 			attack_ratio = player.get_attack_feedback_ratio()
-	current_scale = pulse_scale + charge_ratio * 0.08 + attack_ratio * 0.12 + hover_ratio * 0.04
-	scale = Vector2.ONE * (base_scale * current_scale)
+	var hover_ratio: float = _get_hover_enemy_ratio()
+	charge_scale_bonus = charge_ratio * 0.08
+	attack_scale_bonus = attack_ratio * 0.12
+	hover_scale_bonus = hover_ratio * 0.04
+	var total_scale: float = pulse_scale + charge_scale_bonus + attack_scale_bonus + hover_scale_bonus
+	scale = Vector2.ONE * (base_scale * total_scale)
+
 	current_tint = Color8(235, 242, 255)
 	if hover_ratio > 0.0:
 		current_tint = current_tint.lerp(Color8(255, 208, 124), minf(hover_ratio * 0.75, 0.75))

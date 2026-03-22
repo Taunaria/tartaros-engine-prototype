@@ -6,6 +6,8 @@ signal difficulty_selected(difficulty_id: String, multiplier: float)
 
 const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 const WeaponDB := preload("res://data/weapons/weapon_db.gd")
+const CombatDebug := preload("res://scripts/core/combat_debug.gd")
+const IsoMapper := preload("res://scripts/core/iso.gd")
 
 var level_title_timer := 0.0
 var pickup_message_timer := 0.0
@@ -27,6 +29,13 @@ var pickup_message_timer := 0.0
 @onready var victory_screen: Control = $VictoryScreen
 @onready var difficulty_screen: Control = $DifficultyScreen
 @onready var crosshair: Sprite2D = $Crosshair
+@onready var debug_overlay: Control = $DebugOverlay
+@onready var debug_view_arrow: TextureRect = $DebugOverlay/Panel/MarginContainer/VBoxContainer/ViewRow/ViewArrow
+@onready var debug_view_label: Label = $DebugOverlay/Panel/MarginContainer/VBoxContainer/ViewRow/ViewLabel
+@onready var debug_attack_arrow: TextureRect = $DebugOverlay/Panel/MarginContainer/VBoxContainer/AttackRow/AttackArrow
+@onready var debug_attack_label: Label = $DebugOverlay/Panel/MarginContainer/VBoxContainer/AttackRow/AttackLabel
+@onready var debug_key_icon: TextureRect = $DebugOverlay/Panel/MarginContainer/VBoxContainer/KeyRow/KeyIcon
+@onready var debug_key_label: Label = $DebugOverlay/Panel/MarginContainer/VBoxContainer/KeyRow/KeyLabel
 
 
 func _ready() -> void:
@@ -73,6 +82,7 @@ func _ready() -> void:
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
 	amulet_icon.texture = ItemVisuals.get_amulet_icon()
 	set_amulet_collected(false)
+	_configure_direction_debug_overlay()
 	hide_overlays()
 	call_deferred("_refresh_hp_fill")
 
@@ -89,6 +99,7 @@ func _process(delta: float) -> void:
 		if pickup_message_timer <= 0.0:
 			message_label.visible = false
 	_update_crosshair_visibility()
+	_update_direction_debug_overlay()
 
 
 func hide_overlays() -> void:
@@ -158,12 +169,80 @@ func show_difficulty_screen() -> void:
 	_update_crosshair_visibility()
 
 
+func refresh_direction_debug_overlay() -> void:
+	_update_direction_debug_overlay(true)
+
+
 func _update_crosshair_visibility() -> void:
 	var overlays_visible: bool = death_screen.visible or victory_screen.visible or difficulty_screen.visible
 	var mouse_inside_viewport: bool = get_viewport().get_visible_rect().has_point(get_viewport().get_mouse_position())
 	var show_crosshair: bool = not overlays_visible and mouse_inside_viewport
 	crosshair.visible = show_crosshair
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if show_crosshair else Input.MOUSE_MODE_VISIBLE)
+
+
+func _configure_direction_debug_overlay() -> void:
+	debug_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_set_mouse_passthrough(debug_overlay)
+	debug_overlay.visible = false
+	debug_view_arrow.texture = CombatDebug.get_direction_arrow_texture()
+	debug_attack_arrow.texture = CombatDebug.get_direction_arrow_texture()
+	debug_key_icon.texture = CombatDebug.get_keycap_texture()
+	debug_view_arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	debug_attack_arrow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	debug_key_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	debug_view_arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	debug_attack_arrow.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	debug_key_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	debug_view_arrow.modulate = Color8(72, 149, 255)
+	debug_attack_arrow.modulate = Color8(255, 86, 92)
+	debug_key_icon.modulate = Color8(238, 242, 250)
+	_update_direction_debug_overlay(true)
+
+
+func _update_direction_debug_overlay(force: bool = false) -> void:
+	var enabled: bool = CombatDebug.direction_overlay_enabled
+	if debug_overlay.visible != enabled:
+		debug_overlay.visible = enabled
+		force = true
+	if not enabled and not force:
+		return
+
+	var view_direction_vector: Vector2 = Vector2.DOWN
+	var attack_direction_vector: Vector2 = Vector2.DOWN
+	var view_direction_id: String = "down"
+	var attack_direction_id: String = "down"
+	var last_input_label: String = CombatDebug.last_input_label
+	var player := _get_player()
+	if player != null and is_instance_valid(player) and player.has_method("get_debug_direction_info"):
+		var direction_info: Dictionary = player.get_debug_direction_info()
+		view_direction_vector = direction_info.get("view_direction_vector", view_direction_vector)
+		attack_direction_vector = direction_info.get("attack_direction_vector", attack_direction_vector)
+		view_direction_id = direction_info.get("view_direction_id", view_direction_id)
+		attack_direction_id = direction_info.get("attack_direction_id", attack_direction_id)
+		last_input_label = direction_info.get("last_input_label", last_input_label)
+
+	debug_view_label.text = "Blickrichtung: %s" % view_direction_id
+	debug_attack_label.text = "Attacke Richtung: %s" % attack_direction_id
+	debug_key_label.text = "Letzte Tastenkombination: %s" % last_input_label
+	debug_view_arrow.pivot_offset = _get_debug_icon_pivot(debug_view_arrow)
+	debug_attack_arrow.pivot_offset = _get_debug_icon_pivot(debug_attack_arrow)
+	debug_view_arrow.rotation = IsoMapper.logic_direction_to_screen(view_direction_vector).angle()
+	debug_attack_arrow.rotation = IsoMapper.logic_direction_to_screen(attack_direction_vector).angle()
+
+
+func _get_player() -> Node:
+	var players: Array = get_tree().get_nodes_in_group("player")
+	if players.is_empty():
+		return null
+	return players[0]
+
+
+func _get_debug_icon_pivot(icon: Control) -> Vector2:
+	var icon_size: Vector2 = icon.size
+	if icon_size.length_squared() <= 0.001:
+		icon_size = icon.custom_minimum_size
+	return icon_size * 0.5
 
 
 func _exit_tree() -> void:

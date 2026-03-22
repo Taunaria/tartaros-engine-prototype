@@ -44,6 +44,16 @@ static func render_offset(logic_position: Vector2, render_origin: Vector2) -> Ve
 	return logic_to_screen(logic_position, render_origin) - logic_position
 
 
+static func logic_direction_to_screen(direction: Vector2) -> Vector2:
+	if direction.length_squared() <= 0.001:
+		return Vector2.ZERO
+
+	var projected := Vector2(direction.x - direction.y, (direction.x + direction.y) * 0.5)
+	if projected.length_squared() <= 0.001:
+		return direction.normalized()
+	return projected.normalized()
+
+
 static func sort_key_for_logic(logic_position: Vector2) -> int:
 	return floori(logic_position.x / LOGIC_TILE_SIZE) + floori(logic_position.y / LOGIC_TILE_SIZE)
 
