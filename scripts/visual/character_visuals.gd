@@ -157,7 +157,7 @@ static func vector_to_visual_direction(direction: Vector2) -> String:
 
 
 static func logic_vector_to_visual_direction(direction: Vector2) -> String:
-	return vector_to_visual_direction(direction)
+	return vector_to_visual_direction(IsoMapper.logic_direction_to_screen(direction))
 
 
 static func cardinal_to_visual_direction(direction: Vector2) -> String:
