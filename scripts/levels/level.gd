@@ -11,6 +11,8 @@ const PickupScene := preload("res://scenes/props/WeaponPickup.tscn")
 const GROUND_HEIGHT := 0
 const LOW_STRUCTURE_HEIGHT := 1
 const WALL_HEIGHT := 2
+const NAVIGATION_WALL_BUFFER_TILES := 1
+const NAVIGATION_LOW_STRUCTURE_BUFFER_TILES := 0
 
 const THEMES := {
 	"village": {
@@ -62,6 +64,7 @@ var engaged_enemy_count: int = 0
 var entity_layer: Node2D = null
 var navigation_grid: AStarGrid2D = null
 var blocked_tiles: Dictionary = {}
+var navigation_blocked_tiles: Dictionary = {}
 
 @onready var ground_layer: Node2D = $GroundLayer
 @onready var structure_top_layer: Node2D = $StructureTopLayer
@@ -90,11 +93,12 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	_clear_container(pickups_root)
 	_clear_container(occlusion_layer)
 	_build_navigation_grid()
+	_validate_required_paths()
 	_build_tiles()
 	_build_colliders()
 	_spawn_chest(level_data.get("chest", {}))
-	if not is_final_level:
-		_spawn_exit(current_level_index, total_levels)
+	_spawn_amulet(level_data.get("amulet", {}))
+	_spawn_exit(current_level_index, total_levels)
 	_spawn_enemies()
 
 
@@ -134,6 +138,10 @@ func spawn_pickup(tile_position: Vector2i, reward: Dictionary) -> void:
 	pickups_root.add_child(pickup)
 
 
+func refresh_exit_state() -> void:
+	_update_exit_state()
+
+
 func tile_to_world(tile: Vector2i) -> Vector2:
 	return Vector2(tile.x, tile.y) * TILE_SIZE + Vector2(TILE_SIZE * 0.5, TILE_SIZE * 0.5)
 
@@ -142,15 +150,19 @@ func world_to_tile(world_position: Vector2) -> Vector2i:
 	return Vector2i(floori(world_position.x / TILE_SIZE), floori(world_position.y / TILE_SIZE))
 
 
-func get_navigation_path_tiles(from_world: Vector2, to_world: Vector2) -> Array:
+func get_navigation_path_tiles(from_world: Vector2, to_world: Vector2, attack_distance: float = 0.0) -> Array:
 	if navigation_grid == null:
 		return []
 
-	var start_tile: Vector2i = _find_nearest_walkable_tile(world_to_tile(from_world))
-	var end_tile: Vector2i = _find_nearest_walkable_tile(world_to_tile(to_world))
-	if start_tile.x < 0 or end_tile.x < 0:
+	var start_tile: Vector2i = _find_nearest_navigation_tile(world_to_tile(from_world))
+	if start_tile.x < 0:
 		return []
-	return navigation_grid.get_id_path(start_tile, end_tile)
+
+	var best_path: Array = _get_best_navigation_path(start_tile, _get_navigation_goal_candidates(start_tile, to_world, attack_distance), to_world)
+	if not best_path.is_empty():
+		return best_path
+
+	return _get_best_navigation_path(start_tile, _get_navigation_fallback_candidates(to_world), to_world)
 
 
 func has_clear_tile_line(from_tile: Vector2i, to_tile: Vector2i) -> bool:
@@ -166,7 +178,20 @@ func is_tile_walkable(tile: Vector2i) -> bool:
 	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
 	if tile.x < 0 or tile.y < 0 or tile.x >= size.x or tile.y >= size.y:
 		return false
-	return not blocked_tiles.has(_tile_key(tile))
+	return not navigation_blocked_tiles.has(_tile_key(tile))
+
+
+func has_clear_collision_tile_line(from_tile: Vector2i, to_tile: Vector2i) -> bool:
+	for tile in _get_line_tiles(from_tile, to_tile):
+		if tile == from_tile:
+			continue
+		if is_tile_hard_blocked(tile):
+			return false
+	return true
+
+
+func is_tile_hard_blocked(tile: Vector2i) -> bool:
+	return blocked_tiles.has(_tile_key(tile))
 
 
 func _build_colliders() -> void:
@@ -186,14 +211,20 @@ func _build_colliders() -> void:
 func _build_navigation_grid() -> void:
 	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
 	blocked_tiles.clear()
+	navigation_blocked_tiles.clear()
 	navigation_grid = AStarGrid2D.new()
 	navigation_grid.region = Rect2i(Vector2i.ZERO, size)
 	navigation_grid.cell_size = Vector2.ONE
 	navigation_grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
 	navigation_grid.update()
 
-	for blocked_rect in blocked_rects:
-		_mark_rect_tiles_solid(blocked_rect)
+	for wall_rect in wall_rects:
+		_mark_rect_tiles_solid(wall_rect)
+		_mark_rect_tiles_solid_expanded(wall_rect, NAVIGATION_WALL_BUFFER_TILES)
+
+	for low_structure_rect in level_data.get("collision_height_one_rects", height_one_rects):
+		_mark_rect_tiles_solid(low_structure_rect)
+		_mark_rect_tiles_solid_expanded(low_structure_rect, NAVIGATION_LOW_STRUCTURE_BUFFER_TILES)
 
 
 func _mark_rect_tiles_solid(blocked_rect: Rect2i) -> void:
@@ -201,7 +232,132 @@ func _mark_rect_tiles_solid(blocked_rect: Rect2i) -> void:
 		for x in range(blocked_rect.position.x, blocked_rect.end.x):
 			var tile := Vector2i(x, y)
 			blocked_tiles[_tile_key(tile)] = true
+			navigation_blocked_tiles[_tile_key(tile)] = true
 			navigation_grid.set_point_solid(tile, true)
+
+
+func _mark_rect_tiles_solid_expanded(blocked_rect: Rect2i, buffer_tiles: int) -> void:
+	if buffer_tiles <= 0:
+		return
+
+	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	var start_x: int = maxi(blocked_rect.position.x - buffer_tiles, 0)
+	var end_x: int = mini(blocked_rect.end.x + buffer_tiles, size.x)
+	var start_y: int = maxi(blocked_rect.position.y - buffer_tiles, 0)
+	var end_y: int = mini(blocked_rect.end.y + buffer_tiles, size.y)
+	for y in range(start_y, end_y):
+		for x in range(start_x, end_x):
+			var tile := Vector2i(x, y)
+			navigation_blocked_tiles[_tile_key(tile)] = true
+			navigation_grid.set_point_solid(tile, true)
+
+
+func _find_nearest_navigation_tile(tile: Vector2i) -> Vector2i:
+	if is_tile_walkable(tile):
+		return tile
+
+	for radius in range(1, 7):
+		for candidate in _get_ring_tiles(tile, radius):
+			if not is_tile_walkable(candidate):
+				continue
+			return candidate
+	return Vector2i(-1, -1)
+
+
+func _get_navigation_goal_candidates(start_tile: Vector2i, target_world: Vector2, attack_distance: float) -> Array:
+	var target_tile: Vector2i = world_to_tile(target_world)
+	var candidates: Array = []
+	var level_size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	var attack_buffer: float = TILE_SIZE * 0.9
+	var strict_max_radius: int = maxi(2, ceili((maxf(attack_distance, TILE_SIZE) + attack_buffer) / TILE_SIZE) + 1)
+	var relaxed_max_radius: int = maxi(level_size.x, level_size.y)
+
+	for radius in range(0, strict_max_radius + 1):
+		for candidate in _get_ring_tiles(target_tile, radius):
+			if not is_tile_walkable(candidate):
+				continue
+			if tile_to_world(candidate).distance_to(target_world) > attack_distance + attack_buffer:
+				continue
+			if not has_clear_collision_tile_line(candidate, target_tile):
+				continue
+			candidates.append(candidate)
+		if not candidates.is_empty():
+			return _sort_goal_candidates(candidates, start_tile, target_world)
+
+	for radius in range(strict_max_radius + 1, relaxed_max_radius + 1):
+		for candidate in _get_ring_tiles(target_tile, radius):
+			if not is_tile_walkable(candidate):
+				continue
+			if not has_clear_collision_tile_line(candidate, target_tile):
+				continue
+			candidates.append(candidate)
+		if not candidates.is_empty():
+			return _sort_goal_candidates(candidates, start_tile, target_world)
+
+	return []
+
+
+func _get_navigation_fallback_candidates(target_world: Vector2) -> Array:
+	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	var target_tile: Vector2i = world_to_tile(target_world)
+	var clear_candidates: Array = []
+	var loose_candidates: Array = []
+	for y in range(size.y):
+		for x in range(size.x):
+			var candidate := Vector2i(x, y)
+			if not is_tile_walkable(candidate):
+				continue
+			if has_clear_collision_tile_line(candidate, target_tile):
+				clear_candidates.append(candidate)
+			else:
+				loose_candidates.append(candidate)
+
+	clear_candidates = _sort_goal_candidates(clear_candidates, target_tile, target_world)
+	loose_candidates = _sort_goal_candidates(loose_candidates, target_tile, target_world)
+	return clear_candidates + loose_candidates
+
+
+func _get_best_navigation_path(start_tile: Vector2i, candidates: Array, target_world: Vector2) -> Array:
+	var best_path: Array = []
+	var best_score: float = INF
+	for candidate in candidates:
+		var path: Array = navigation_grid.get_id_path(start_tile, candidate)
+		if path.is_empty():
+			continue
+		var score: float = float(path.size()) * 100.0 + tile_to_world(candidate).distance_to(target_world)
+		if score < best_score:
+			best_score = score
+			best_path = path
+	return best_path
+
+
+func _sort_goal_candidates(candidates: Array, start_tile: Vector2i, target_world: Vector2) -> Array:
+	candidates.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
+		var a_distance_to_target: float = tile_to_world(a).distance_to(target_world)
+		var b_distance_to_target: float = tile_to_world(b).distance_to(target_world)
+		if not is_equal_approx(a_distance_to_target, b_distance_to_target):
+			return a_distance_to_target < b_distance_to_target
+		return a.distance_squared_to(start_tile) < b.distance_squared_to(start_tile)
+	)
+	return candidates
+
+
+func _get_ring_tiles(center: Vector2i, radius: int) -> Array:
+	if radius <= 0:
+		return [center]
+
+	var size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	var tiles: Array = []
+	for y in range(center.y - radius, center.y + radius + 1):
+		for x in range(center.x - radius, center.x + radius + 1):
+			if x < 0 or y < 0 or x >= size.x or y >= size.y:
+				continue
+			if maxi(absi(x - center.x), absi(y - center.y)) != radius:
+				continue
+			tiles.append(Vector2i(x, y))
+	return tiles
+
+
 
 
 func _build_tiles() -> void:
@@ -284,6 +440,22 @@ func _spawn_exit(current_level_index: int, total_levels: int) -> void:
 	exit_portal.setup(game, next_index, level_data.get("name", ""))
 	exit_portal.set_render_origin(render_origin)
 	props_root.add_child(exit_portal)
+	_update_exit_state()
+
+
+func _spawn_amulet(amulet_data: Dictionary) -> void:
+	if amulet_data.is_empty():
+		return
+
+	var pickup: Area2D = PickupScene.instantiate()
+	pickup.position = tile_to_world(amulet_data.get("position", Vector2i.ZERO))
+	pickup.setup(game, {
+		"type": "amulet",
+		"id": amulet_data.get("id", "amulet"),
+		"label": amulet_data.get("label", "Amulett erhalten")
+	})
+	pickup.set_render_origin(render_origin)
+	pickups_root.add_child(pickup)
 
 
 func _spawn_enemies() -> void:
@@ -376,20 +548,6 @@ func _find_extra_enemy_position(source_position: Vector2i, occupied: Dictionary)
 	return source_position
 
 
-func _find_nearest_walkable_tile(tile: Vector2i) -> Vector2i:
-	if is_tile_walkable(tile):
-		return tile
-
-	for radius in range(1, 7):
-		for y in range(tile.y - radius, tile.y + radius + 1):
-			for x in range(tile.x - radius, tile.x + radius + 1):
-				var candidate := Vector2i(x, y)
-				if not is_tile_walkable(candidate):
-					continue
-				return candidate
-	return Vector2i(-1, -1)
-
-
 func _is_enemy_spawn_tile_available(tile: Vector2i, occupied: Dictionary) -> bool:
 	var level_size: Vector2i = level_data.get("size", Vector2i.ZERO)
 	if tile.x < 0 or tile.y < 0 or tile.x >= level_size.x or tile.y >= level_size.y:
@@ -451,10 +609,11 @@ func _on_enemy_engagement_changed(_enemy: Node, engaged: bool) -> void:
 
 
 func _update_exit_state() -> void:
-	if is_final_level or exit_portal == null:
+	if exit_portal == null:
 		return
 
-	exit_portal.set_locked(remaining_enemies > 0)
+	var unlocked: bool = game != null and game.has_method("has_current_level_amulet") and game.has_current_level_amulet()
+	exit_portal.set_locked(not unlocked)
 
 
 func _on_enemy_defeated(enemy_node: Node, reward: Dictionary) -> void:
@@ -465,10 +624,27 @@ func _on_enemy_defeated(enemy_node: Node, reward: Dictionary) -> void:
 		spawn_pickup(tile, {"type": "heal", "amount": 1, "label": "Ration"})
 
 	remaining_enemies = max(remaining_enemies - 1, 0)
-	if remaining_enemies == 0 and is_final_level:
-		game.complete_demo()
-		return
 	_update_exit_state()
+
+
+func _validate_required_paths() -> void:
+	var start_world: Vector2 = get_start_world_position()
+	var chest_data: Dictionary = level_data.get("chest", {})
+	var amulet_data: Dictionary = level_data.get("amulet", {})
+	var exit_tile: Vector2i = level_data.get("exit", Vector2i(-1, -1))
+
+	if not chest_data.is_empty():
+		_validate_path_target("chest", start_world, tile_to_world(chest_data.get("position", Vector2i.ZERO)))
+	if not amulet_data.is_empty():
+		_validate_path_target("amulet", start_world, tile_to_world(amulet_data.get("position", Vector2i.ZERO)))
+	if exit_tile.x >= 0:
+		_validate_path_target("exit", start_world, tile_to_world(exit_tile))
+
+
+func _validate_path_target(label: String, from_world: Vector2, to_world: Vector2) -> void:
+	var path: Array = get_navigation_path_tiles(from_world, to_world, 0.0)
+	if path.is_empty():
+		push_error("Level '%s' has no valid path from start to %s." % [level_data.get("id", "unknown"), label])
 
 
 func _is_in_rects(tile: Vector2i, rects: Array) -> bool:

@@ -7,6 +7,11 @@ var game: Node = null
 var opened: bool = false
 var player_in_range: bool = false
 var render_origin: Vector2 = Vector2.ZERO
+var fade_elapsed: float = 0.0
+var fade_started: bool = false
+
+const FADE_DELAY := 0.3
+const FADE_DURATION := 0.6
 
 
 func setup(game_ref: Node, reward: Dictionary) -> void:
@@ -31,13 +36,32 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
+	if fade_started:
+		fade_elapsed += _delta
+		var alpha: float = 1.0
+		if fade_elapsed > FADE_DELAY:
+			alpha = 1.0 - clampf((fade_elapsed - FADE_DELAY) / FADE_DURATION, 0.0, 1.0)
+		modulate.a = alpha
+		if fade_elapsed >= FADE_DELAY + FADE_DURATION:
+			queue_free()
+		return
+
 	if opened or not player_in_range:
 		return
 
 	if Input.is_action_just_pressed("interact") and game != null:
 		opened = true
+		if game.has_method("play_sfx"):
+			game.play_sfx("chest_open")
+		if game.has_method("spawn_xp_popup"):
+			game.spawn_xp_popup(25, global_position)
 		game.give_reward(reward_data)
 		game.show_interaction_hint("")
+		fade_started = true
+		fade_elapsed = 0.0
+		monitoring = false
+		collision_layer = 0
+		collision_mask = 0
 		queue_redraw()
 
 

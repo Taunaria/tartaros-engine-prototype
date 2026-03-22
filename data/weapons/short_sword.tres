@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/short_sword.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "short_sword"
+display_name = "Kurzschwert"
+icon = ExtResource("2")
+damage = 3.0
+attack_range = 38.0
+knockback = 72.0
+attack_speed = 0.4
+attack_width = 24.0
+stun_duration = 0.1
+color = Color(0.717647, 0.752941, 0.796078, 1)

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/woodcutter_axe.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "woodcutter_axe"
+display_name = "Holzaxt"
+icon = ExtResource("2")
+damage = 3.0
+attack_range = 34.0
+knockback = 104.0
+attack_speed = 0.56
+attack_width = 32.0
+stun_duration = 0.62
+color = Color(0.662745, 0.72549, 0.588235, 1)

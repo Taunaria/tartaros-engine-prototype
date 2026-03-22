@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/long_sword.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "long_sword"
+display_name = "Langschwert"
+icon = ExtResource("2")
+damage = 4.0
+attack_range = 44.0
+knockback = 88.0
+attack_speed = 0.36
+attack_width = 26.0
+stun_duration = 0.12
+color = Color(0.776471, 0.819608, 0.878431, 1)

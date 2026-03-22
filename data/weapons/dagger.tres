@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/dagger.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "dagger"
+display_name = "Dolch"
+icon = ExtResource("2")
+damage = 1.0
+attack_range = 24.0
+knockback = 52.0
+attack_speed = 0.32
+attack_width = 20.0
+stun_duration = 0.08
+color = Color(0.823529, 0.823529, 0.866667, 1)

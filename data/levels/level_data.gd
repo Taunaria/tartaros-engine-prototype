@@ -101,6 +101,10 @@ static func _village_level() -> Dictionary:
 			"position": Vector2i(7, 15),
 			"reward": {"type": "weapon", "id": "club", "label": "Knueppel"}
 		},
+		"amulet": {
+			"position": Vector2i(23, 13),
+			"label": "Dorfsiegel erhalten"
+		},
 		"accent_rects": paths,
 		"wall_rects": walls,
 		"height_one_rects": fences + well_and_crates,
@@ -109,11 +113,12 @@ static func _village_level() -> Dictionary:
 			_material("wood", barn + shed + fences)
 		],
 		"enemies": [
-			{"type": "zombie", "position": Vector2i(15, 22)},
+			{"type": "zombie", "position": Vector2i(15, 22), "patrol": [Vector2i(15, 22), Vector2i(18, 20), Vector2i(20, 18), Vector2i(17, 21)]},
 			{"type": "zombie", "position": Vector2i(10, 16)},
 			{"type": "zombie", "position": Vector2i(20, 18)},
 			{"type": "zombie", "position": Vector2i(23, 14)},
-			{"type": "skeleton", "position": Vector2i(25, 12)}
+			{"type": "skeleton", "position": Vector2i(25, 12)},
+			{"type": "snake", "position": Vector2i(22, 13)}
 		]
 	}
 
@@ -202,6 +207,10 @@ static func _forest_level() -> Dictionary:
 			"position": Vector2i(25, 24),
 			"reward": {"type": "weapon", "id": "woodcutter_axe", "label": "Holzaxt"}
 		},
+		"amulet": {
+			"position": Vector2i(23, 23),
+			"label": "Waldamulett erhalten"
+		},
 		"accent_rects": trails,
 		"wall_rects": tree_walls,
 		"height_one_rects": shrubs,
@@ -213,11 +222,12 @@ static func _forest_level() -> Dictionary:
 			{"type": "zombie", "position": Vector2i(10, 25)},
 			{"type": "zombie", "position": Vector2i(12, 22)},
 			{"type": "zombie", "position": Vector2i(17, 19)},
-			{"type": "skeleton", "position": Vector2i(20, 17)},
+			{"type": "skeleton", "position": Vector2i(20, 17), "patrol": [Vector2i(20, 17), Vector2i(22, 15), Vector2i(25, 18), Vector2i(22, 20)]},
 			{"type": "zombie", "position": Vector2i(22, 12)},
 			{"type": "skeleton", "position": Vector2i(24, 10)},
 			{"type": "zombie", "position": Vector2i(24, 22), "drop": {"type": "heal", "amount": 2, "label": "Verband"}},
-			{"type": "skeleton", "position": Vector2i(26, 21)}
+			{"type": "skeleton", "position": Vector2i(26, 21)},
+			{"type": "snake", "position": Vector2i(24, 23)}
 		]
 	}
 
@@ -290,6 +300,10 @@ static func _cave_level() -> Dictionary:
 			"position": Vector2i(24, 24),
 			"reward": {"type": "weapon", "id": "short_sword", "label": "Kurzschwert"}
 		},
+		"amulet": {
+			"position": Vector2i(22, 24),
+			"label": "Hoehlenamulett erhalten"
+		},
 		"accent_rects": cave_path,
 		"wall_rects": cave_walls,
 		"height_one_rects": outcroppings,
@@ -298,11 +312,12 @@ static func _cave_level() -> Dictionary:
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(9, 26)},
 			{"type": "zombie", "position": Vector2i(14, 21)},
-			{"type": "skeleton", "position": Vector2i(16, 17)},
+			{"type": "skeleton", "position": Vector2i(16, 17), "patrol": [Vector2i(16, 17), Vector2i(18, 15), Vector2i(21, 13), Vector2i(18, 16)]},
 			{"type": "zombie", "position": Vector2i(19, 16)},
 			{"type": "zombie", "position": Vector2i(21, 14)},
 			{"type": "skeleton", "position": Vector2i(25, 10), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}},
-			{"type": "zombie", "position": Vector2i(23, 24)}
+			{"type": "zombie", "position": Vector2i(23, 24)},
+			{"type": "snake", "position": Vector2i(21, 24)}
 		]
 	}
 
@@ -383,6 +398,10 @@ static func _prison_level() -> Dictionary:
 			"position": Vector2i(26, 24),
 			"reward": {"type": "heal", "amount": 4, "label": "Grosser Trank"}
 		},
+		"amulet": {
+			"position": Vector2i(24, 23),
+			"label": "Kerkeramulett erhalten"
+		},
 		"accent_rects": corridors,
 		"wall_rects": prison_walls,
 		"height_one_rects": bunks_and_crates,
@@ -398,8 +417,9 @@ static func _prison_level() -> Dictionary:
 			{"type": "zombie", "position": Vector2i(16, 11)},
 			{"type": "zombie", "position": Vector2i(16, 22)},
 			{"type": "zombie", "position": Vector2i(25, 11)},
-			{"type": "skeleton", "position": Vector2i(24, 18)},
-			{"type": "skeleton", "position": Vector2i(27, 22), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}}
+			{"type": "skeleton", "position": Vector2i(24, 18), "patrol": [Vector2i(24, 18), Vector2i(24, 14), Vector2i(25, 11), Vector2i(27, 14)]},
+			{"type": "skeleton", "position": Vector2i(27, 22), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}},
+			{"type": "snake", "position": Vector2i(24, 22)}
 		]
 	}
 
@@ -463,6 +483,10 @@ static func _temple_level() -> Dictionary:
 			"position": Vector2i(25, 26),
 			"reward": {"type": "weapon", "id": "long_sword", "label": "Langschwert"}
 		},
+		"amulet": {
+			"position": Vector2i(22, 25),
+			"label": "Tempelamulett erhalten"
+		},
 		"accent_rects": processional_paths,
 		"wall_rects": temple_walls,
 		"height_one_rects": altar_steps + side_plinths,
@@ -475,11 +499,12 @@ static func _temple_level() -> Dictionary:
 			{"type": "skeleton", "position": Vector2i(11, 17)},
 			{"type": "zombie", "position": Vector2i(12, 15)},
 			{"type": "zombie", "position": Vector2i(19, 15)},
-			{"type": "skeleton", "position": Vector2i(20, 17)},
+			{"type": "skeleton", "position": Vector2i(20, 17), "patrol": [Vector2i(20, 17), Vector2i(20, 11), Vector2i(23, 9), Vector2i(23, 17)]},
 			{"type": "zombie", "position": Vector2i(23, 18)},
 			{"type": "skeleton", "position": Vector2i(8, 9)},
 			{"type": "skeleton", "position": Vector2i(23, 9)},
-			{"type": "skeleton", "position": Vector2i(21, 24), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}}
+			{"type": "skeleton", "position": Vector2i(21, 24), "drop": {"type": "heal", "amount": 2, "label": "Bandage"}},
+			{"type": "snake", "position": Vector2i(23, 25)}
 		]
 	}
 
@@ -547,6 +572,10 @@ static func _abyss_level() -> Dictionary:
 				"heal_amount": 6
 			}
 		},
+		"amulet": {
+			"position": Vector2i(15, 12),
+			"label": "Abyss-Amulett erhalten"
+		},
 		"accent_rects": lava_fields,
 		"wall_rects": abyss_walls,
 		"height_one_rects": low_rocks,
@@ -555,9 +584,10 @@ static func _abyss_level() -> Dictionary:
 		"enemies": [
 			{"type": "zombie", "position": Vector2i(9, 24)},
 			{"type": "zombie", "position": Vector2i(12, 22)},
-			{"type": "skeleton", "position": Vector2i(18, 21)},
+			{"type": "skeleton", "position": Vector2i(18, 21), "patrol": [Vector2i(18, 21), Vector2i(17, 18), Vector2i(19, 15), Vector2i(22, 17)]},
 			{"type": "zombie", "position": Vector2i(14, 17)},
 			{"type": "skeleton", "position": Vector2i(19, 15), "drop": {"type": "heal", "amount": 3, "label": "Heiltrank"}},
+			{"type": "snake", "position": Vector2i(16, 12)},
 			{"type": "boss", "position": Vector2i(15, 10)}
 		]
 	}

@@ -3,8 +3,15 @@ class_name CharacterVisuals
 
 static var _texture_cache: Dictionary = {}
 static var _texture_analysis_cache: Dictionary = {}
-const DIRECTION_IDS := ["dr", "ul", "ur", "dl"]
-const STATE_IDS := ["idle", "attack"]
+const DIRECTION_IDS := ["up", "down", "left", "right", "up_left", "up_right", "down_left", "down_right"]
+const LEGACY_DIRECTION_IDS := ["dr", "ul", "ur", "dl"]
+const STATE_IDS := ["idle", "walk", "attack", "hit", "death"]
+const LEGACY_DIRECTION_MAP := {
+	"down_right": "dr",
+	"up_left": "ul",
+	"up_right": "ur",
+	"down_left": "dl"
+}
 
 const VISUALS := {
 	"player": {
@@ -52,19 +59,19 @@ static func has_visual(visual_id: String) -> bool:
 
 
 static func get_texture(visual_id: String) -> Texture2D:
-	return get_state_texture(visual_id, "dr", "idle")
+	return get_state_texture(visual_id, "down_right", "idle")
 
 
-static func get_state_texture(visual_id: String, direction_id: String, state_id: String) -> Texture2D:
-	var texture_data: Dictionary = get_state_texture_draw_data(visual_id, direction_id, state_id, Vector2.ZERO)
+static func get_state_texture(visual_id: String, direction_id: String, state_id: String, frame_id: String = "") -> Texture2D:
+	var texture_data: Dictionary = get_state_texture_draw_data(visual_id, direction_id, state_id, Vector2.ZERO, frame_id)
 	return texture_data.get("texture", null)
 
 
-static func get_state_texture_draw_data(visual_id: String, direction_id: String, state_id: String, base: Vector2) -> Dictionary:
+static func get_state_texture_draw_data(visual_id: String, direction_id: String, state_id: String, base: Vector2, frame_id: String = "") -> Dictionary:
 	if not VISUALS.has(visual_id):
 		return {}
 	var entry: Dictionary = VISUALS[visual_id]
-	var path: String = _resolve_texture_path(entry, direction_id, state_id)
+	var path: String = _resolve_texture_path(entry, direction_id, state_id, frame_id)
 	if path.is_empty():
 		return {}
 	var texture: Texture2D = _load_texture(path)
@@ -91,46 +98,77 @@ static func get_state_texture_draw_data(visual_id: String, direction_id: String,
 	}
 
 
-static func has_state_texture(visual_id: String, direction_id: String, state_id: String) -> bool:
+static func has_state_texture(visual_id: String, direction_id: String, state_id: String, frame_id: String = "") -> bool:
 	if not VISUALS.has(visual_id):
 		return false
 	var entry: Dictionary = VISUALS[visual_id]
-	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id)
+	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id, frame_id)
 	if direction_path.is_empty():
 		return false
 	return FileAccess.file_exists(ProjectSettings.globalize_path(direction_path))
 
 
+static func vector_to_visual_direction(direction: Vector2) -> String:
+	if direction.length_squared() <= 0.001:
+		return "down"
+	var angle: float = direction.angle()
+	if angle >= -PI * 0.125 and angle < PI * 0.125:
+		return "right"
+	if angle >= PI * 0.125 and angle < PI * 0.375:
+		return "down_right"
+	if angle >= PI * 0.375 and angle < PI * 0.625:
+		return "down"
+	if angle >= PI * 0.625 and angle < PI * 0.875:
+		return "down_left"
+	if angle >= PI * 0.875 or angle < -PI * 0.875:
+		return "left"
+	if angle >= -PI * 0.875 and angle < -PI * 0.625:
+		return "up_left"
+	if angle >= -PI * 0.625 and angle < -PI * 0.375:
+		return "up"
+	return "up_right"
+
+
 static func cardinal_to_visual_direction(direction: Vector2) -> String:
-	if direction == Vector2.RIGHT:
-		return "dr"
-	if direction == Vector2.LEFT:
-		return "ul"
-	if direction == Vector2.UP:
-		return "ur"
-	if direction == Vector2.DOWN:
-		return "dl"
-	return "dr"
+	return vector_to_visual_direction(direction)
 
 
-static func _get_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String) -> String:
+static func _get_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
 	var prefix: String = entry.get("directional_prefix", "")
 	if prefix.is_empty():
 		return ""
 	if not DIRECTION_IDS.has(direction_id):
-		direction_id = "dr"
+		direction_id = "down_right"
 	if not STATE_IDS.has(state_id):
 		state_id = "idle"
-	return "res://assets/textures/characters/directional/%s_%s_%s.png" % [prefix, state_id, direction_id]
+	var frame_suffix: String = "_%s" % frame_id if not frame_id.is_empty() else ""
+	return "res://assets/textures/characters/extended/%s_%s_%s%s.png" % [prefix, state_id, direction_id, frame_suffix]
 
 
-static func _resolve_texture_path(entry: Dictionary, direction_id: String, state_id: String) -> String:
-	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id)
+static func _resolve_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
+	var direction_path: String = _get_directional_texture_path(entry, direction_id, state_id, frame_id)
 	if not direction_path.is_empty():
 		var directional_texture: Texture2D = _load_texture(direction_path)
 		if directional_texture != null:
 			return direction_path
+	var legacy_path: String = _get_legacy_directional_texture_path(entry, direction_id, state_id)
+	if not legacy_path.is_empty():
+		var legacy_texture: Texture2D = _load_texture(legacy_path)
+		if legacy_texture != null:
+			return legacy_path
 	return entry.get("default_texture_path", "")
+
+
+static func _get_legacy_directional_texture_path(entry: Dictionary, direction_id: String, state_id: String) -> String:
+	var prefix: String = entry.get("directional_prefix", "")
+	if prefix.is_empty():
+		return ""
+	if state_id != "idle" and state_id != "attack":
+		return ""
+	var legacy_direction_id: String = LEGACY_DIRECTION_MAP.get(direction_id, "")
+	if legacy_direction_id.is_empty():
+		return ""
+	return "res://assets/textures/characters/directional/%s_%s_%s.png" % [prefix, state_id, legacy_direction_id]
 
 
 static func _load_texture(path: String) -> Texture2D:

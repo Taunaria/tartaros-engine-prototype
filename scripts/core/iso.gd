@@ -31,6 +31,15 @@ static func logic_to_screen(logic_position: Vector2, render_origin: Vector2) -> 
 	) + render_origin
 
 
+static func screen_to_logic(screen_position: Vector2, render_origin: Vector2) -> Vector2:
+	var sx: float = screen_position.x - render_origin.x
+	var sy: float = screen_position.y - render_origin.y + HALF_RENDER_TILE_HEIGHT
+	return Vector2(
+		sy + sx * 0.5,
+		sy - sx * 0.5
+	)
+
+
 static func render_offset(logic_position: Vector2, render_origin: Vector2) -> Vector2:
 	return logic_to_screen(logic_position, render_origin) - logic_position
 

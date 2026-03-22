@@ -1,7 +1,7 @@
 extends CharacterBody2D
 
 signal hp_changed(current_hp: int, max_hp: int)
-signal weapon_changed(weapon_data: Dictionary)
+signal weapon_changed(weapon_data)
 signal died
 
 const WeaponDB := preload("res://data/weapons/weapon_db.gd")
@@ -16,6 +16,10 @@ const CharacterVisuals := preload("res://scripts/visual/character_visuals.gd")
 @export var attack_active_duration := 0.24
 @export var attack_recovery_duration := 0.22
 @export var attack_move_multiplier := 0.35
+@export var sprint_move_multiplier := 1.75
+@export var max_charge_duration := 0.8
+@export var max_charge_bonus_range := 18.0
+@export var charge_visual_scale_bonus := 0.08
 @export var hit_pause_duration := 0.12
 @export var hit_knockback_speed := 110.0
 @export var hit_knockback_decay := 900.0
@@ -24,15 +28,24 @@ const CharacterVisuals := preload("res://scripts/visual/character_visuals.gd")
 var hp := max_hp
 var control_enabled := true
 var weapon_inventory: Dictionary = {}
-var current_weapon_id := WeaponDB.get_default_weapon_id()
+var current_weapon = null
+var has_amulet := false
 var last_direction := Vector2.DOWN
+var attack_direction := Vector2.DOWN
 var attack_timer := 0.0
 var attack_active_timer := 0.0
 var attack_recovery_timer := 0.0
 var hit_timer := 0.0
 var hit_stun_timer := 0.0
 var attack_flash_timer := 0.0
+var walk_anim_timer := 0.0
+var death_visual_timer := 0.0
+var charge_time := 0.0
+var charging_attack := false
+var current_attack_charge_ratio := 0.0
+var current_attack_weapon: Dictionary = {}
 var render_origin: Vector2 = Vector2.ZERO
+var game: Node = null
 var hit_targets: Dictionary = {}
 var knockback_velocity: Vector2 = Vector2.ZERO
 
@@ -44,10 +57,14 @@ func _ready() -> void:
 	reset_for_new_run()
 
 
+func set_game_ref(game_ref: Node) -> void:
+	game = game_ref
+
+
 func _physics_process(delta: float) -> void:
 	_tick_timers(delta)
 
-	_handle_attack_input()
+	_handle_attack_input(delta)
 
 	if hit_stun_timer > 0.0:
 		velocity = knockback_velocity
@@ -60,6 +77,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 
 	move_and_slide()
+	_update_walk_animation(delta)
 	z_index = IsoMapper.entity_sort_z_for_foot(_get_sort_anchor_position())
 	_update_attack_hitbox()
 	_update_attack_state()
@@ -70,10 +88,10 @@ func _draw() -> void:
 	_draw_character_shadow(base)
 	_draw_character_visual(base)
 
-	var visual_direction: String = CharacterVisuals.cardinal_to_visual_direction(last_direction)
+	var visual_direction: String = _get_visual_direction_id()
 	if attack_flash_timer > 0.0 and not CharacterVisuals.has_state_texture("player", visual_direction, "attack"):
-		var weapon: Dictionary = get_current_weapon()
-		var tip_logic: Vector2 = position + last_direction * _get_attack_visual_length(weapon)
+		var weapon: Dictionary = _get_active_attack_weapon()
+		var tip_logic: Vector2 = position + attack_direction * _get_attack_visual_length(weapon)
 		var tip: Vector2 = IsoMapper.logic_to_screen(tip_logic, render_origin) - position
 		draw_line(CharacterVisuals.get_weapon_anchor("player", base), tip, weapon["color"], 4.0)
 
@@ -83,6 +101,7 @@ func _draw() -> void:
 
 func reset_for_new_run() -> void:
 	hp = max_hp
+	has_amulet = false
 	weapon_inventory.clear()
 	unlock_weapon(WeaponDB.get_default_weapon_id(), true)
 	equip_weapon(WeaponDB.get_default_weapon_id())
@@ -92,8 +111,15 @@ func reset_for_new_run() -> void:
 	hit_timer = 0.0
 	hit_stun_timer = 0.0
 	attack_flash_timer = 0.0
+	walk_anim_timer = 0.0
+	death_visual_timer = 0.0
+	charge_time = 0.0
+	charging_attack = false
+	current_attack_charge_ratio = 0.0
+	current_attack_weapon.clear()
 	control_enabled = true
 	last_direction = Vector2.DOWN
+	attack_direction = Vector2.DOWN
 	hit_targets.clear()
 	knockback_velocity = Vector2.ZERO
 	attack_area.monitoring = false
@@ -118,24 +144,35 @@ func get_visual_position() -> Vector2:
 
 
 func unlock_weapon(weapon_id: String, silent: bool = false) -> bool:
-	if weapon_inventory.has(weapon_id):
+	var weapon_data = WeaponDB.get_weapon(weapon_id)
+	if weapon_data == null or weapon_inventory.has(weapon_data.id):
 		return false
 
-	weapon_inventory[weapon_id] = true
+	weapon_inventory[weapon_data.id] = weapon_data
 	if not silent:
-		equip_weapon(weapon_id)
+		equip_weapon(weapon_data.id)
 	return true
 
 
 func equip_weapon(weapon_id: String) -> void:
-	current_weapon_id = weapon_id
+	current_weapon = WeaponDB.get_weapon(weapon_id)
 	emit_signal("weapon_changed", get_current_weapon())
 	_update_attack_hitbox()
 	queue_redraw()
 
 
-func get_current_weapon() -> Dictionary:
-	return WeaponDB.get_weapon(current_weapon_id)
+func get_current_weapon():
+	if current_weapon == null:
+		current_weapon = WeaponDB.get_default_weapon()
+	return current_weapon
+
+
+func obtain_amulet() -> void:
+	has_amulet = true
+
+
+func clear_amulet() -> void:
+	has_amulet = false
 
 
 func heal(amount: int) -> int:
@@ -150,6 +187,8 @@ func take_damage(amount: int, hit_direction: Vector2 = Vector2.ZERO, knockback_s
 		return
 
 	hp = max(hp - amount, 0)
+	if game != null and game.has_method("play_sfx"):
+		game.play_sfx("player_hit")
 	hit_timer = 0.45
 	hit_stun_timer = hit_pause_duration
 	var knockback_speed: float = hit_knockback_speed if knockback_speed_override < 0.0 else knockback_speed_override
@@ -157,11 +196,15 @@ func take_damage(amount: int, hit_direction: Vector2 = Vector2.ZERO, knockback_s
 	attack_timer = maxf(attack_timer, 0.18)
 	attack_active_timer = 0.0
 	attack_recovery_timer = maxf(attack_recovery_timer, 0.12)
+	_cancel_attack_charge()
+	current_attack_weapon.clear()
+	current_attack_charge_ratio = 0.0
 	attack_area.monitoring = false
 	emit_signal("hp_changed", hp, max_hp)
 	queue_redraw()
 	if hp <= 0:
 		control_enabled = false
+		death_visual_timer = 0.45
 		emit_signal("died")
 
 
@@ -172,26 +215,56 @@ func _handle_movement() -> void:
 	)
 
 	if direction.length_squared() > 0.0:
-		last_direction = _to_cardinal_direction(direction)
-	velocity = direction.normalized() * move_speed
+		last_direction = direction.normalized()
+	var speed_multiplier: float = sprint_move_multiplier if _is_sprinting() else 1.0
+	velocity = direction.normalized() * move_speed * speed_multiplier
 	queue_redraw()
 
 
-func _handle_attack_input() -> void:
+func _handle_attack_input(delta: float) -> void:
 	if not control_enabled:
+		_cancel_attack_charge()
 		return
 
-	if not Input.is_action_just_pressed("attack"):
+	if _is_sprinting():
+		_cancel_attack_charge()
 		return
 
 	if attack_timer > 0.0 or attack_active_timer > 0.0 or attack_recovery_timer > 0.0 or hit_stun_timer > 0.0:
+		if not Input.is_action_pressed("attack"):
+			_cancel_attack_charge()
 		return
 
-	_start_attack()
+	if Input.is_action_just_pressed("attack"):
+		charging_attack = true
+		charge_time = 0.0
+		attack_direction = _get_attack_direction_from_mouse()
+		queue_redraw()
+		return
+
+	if not charging_attack:
+		return
+
+	attack_direction = _get_attack_direction_from_mouse()
+	if Input.is_action_pressed("attack"):
+		charge_time = minf(charge_time + delta, max_charge_duration)
+		queue_redraw()
+		return
+
+	if Input.is_action_just_released("attack"):
+		_start_attack()
+		return
+
+	_cancel_attack_charge()
 
 
 func _start_attack() -> void:
-	var weapon: Dictionary = get_current_weapon()
+	attack_direction = _get_attack_direction_from_mouse()
+	current_attack_charge_ratio = _get_charge_ratio()
+	current_attack_weapon = _build_attack_weapon(get_current_weapon(), current_attack_charge_ratio)
+	if game != null and game.has_method("play_sfx"):
+		game.play_sfx("attack")
+	var weapon: Dictionary = _get_active_attack_weapon()
 	var attack_cycle: float = _get_weapon_attack_cycle(weapon)
 	attack_timer = attack_cycle
 	attack_active_timer = attack_active_duration
@@ -199,6 +272,8 @@ func _start_attack() -> void:
 	attack_flash_timer = attack_active_duration
 	hit_targets.clear()
 	attack_area.monitoring = true
+	charging_attack = false
+	charge_time = 0.0
 	_update_attack_hitbox()
 	_debug_attack_state("start")
 	_apply_attack_hits(weapon)
@@ -211,26 +286,23 @@ func _update_attack_state() -> void:
 		return
 
 	_update_attack_hitbox()
-	_apply_attack_hits(get_current_weapon())
+	_apply_attack_hits(_get_active_attack_weapon())
 
 
 func _update_attack_hitbox() -> void:
-	var rectangle := attack_shape.shape as RectangleShape2D
-	if rectangle == null:
+	var circle := attack_shape.shape as CircleShape2D
+	if circle == null:
 		return
 
-	var weapon: Dictionary = get_current_weapon()
-	var attack_start: float = _get_attack_start_distance()
-	var attack_end: float = _get_attack_end_distance(weapon)
-	rectangle.size = Vector2(attack_end - attack_start, _get_attack_full_width(weapon))
-	attack_area.position = last_direction * ((attack_start + attack_end) * 0.5)
-	attack_area.rotation = last_direction.angle()
+	var weapon: Dictionary = _get_active_attack_weapon()
+	circle.radius = _get_attack_hit_radius(weapon)
+	attack_area.position = attack_direction * _get_attack_center_distance(weapon)
+	attack_area.rotation = 0.0
 
 
 func _apply_attack_hits(weapon: Dictionary) -> void:
-	var attack_start: float = _get_attack_start_distance()
-	var attack_end: float = _get_attack_end_distance(weapon)
-	var attack_half_width: float = _get_attack_half_width(weapon)
+	var attack_center: Vector2 = global_position + attack_direction * _get_attack_center_distance(weapon)
+	var attack_radius: float = _get_attack_hit_radius(weapon)
 
 	for body in get_tree().get_nodes_in_group("enemies"):
 		if body == null or not is_instance_valid(body):
@@ -239,21 +311,21 @@ func _apply_attack_hits(weapon: Dictionary) -> void:
 			continue
 
 		var target_padding: float = _get_target_hit_padding(body) + 2.0
-		var attack_space_position: Vector2 = _to_attack_space(_get_attack_target_position(body))
+		var target_position: Vector2 = _get_attack_target_position(body)
+		var hit_distance: float = target_position.distance_to(attack_center)
 		if debug_attack or CombatDebug.enabled:
 			print(
-				"attack check %s forward=%.2f sideways=%.2f start=%.2f end=%.2f half=%.2f pad=%.2f"
+				"attack check %s dist=%.2f radius=%.2f pad=%.2f center=%s dir=%s"
 				% [
 					body.name,
-					attack_space_position.x,
-					absf(attack_space_position.y),
-					attack_start,
-					attack_end,
-					attack_half_width,
-					target_padding
+					hit_distance,
+					attack_radius,
+					target_padding,
+					attack_center,
+					attack_direction
 				]
 			)
-		if not _is_inside_attack_window(attack_space_position, attack_start, attack_end, attack_half_width, target_padding):
+		if hit_distance > attack_radius + target_padding:
 			continue
 
 		var instance_id: int = body.get_instance_id()
@@ -262,7 +334,13 @@ func _apply_attack_hits(weapon: Dictionary) -> void:
 
 		hit_targets[instance_id] = true
 		_debug_attack_state("hit %s" % body.name)
-		body.take_damage(int(weapon["damage"]), last_direction)
+		body.take_damage(
+			int(weapon["damage"]),
+			attack_direction,
+			float(weapon.get("knockback", 0.0)),
+			float(weapon.get("stun_duration", 0.0)),
+			current_attack_charge_ratio
+		)
 
 
 func _tick_timers(delta: float) -> void:
@@ -285,6 +363,13 @@ func _tick_timers(delta: float) -> void:
 	if hit_stun_timer > 0.0:
 		hit_stun_timer = maxf(hit_stun_timer - delta, 0.0)
 
+	if death_visual_timer > 0.0:
+		death_visual_timer = maxf(death_visual_timer - delta, 0.0)
+
+	if attack_timer <= 0.0 and attack_active_timer <= 0.0 and attack_recovery_timer <= 0.0:
+		current_attack_weapon.clear()
+		current_attack_charge_ratio = 0.0
+
 
 func _to_cardinal_direction(direction: Vector2) -> Vector2:
 	if absf(direction.x) >= absf(direction.y):
@@ -300,26 +385,18 @@ func _get_weapon_attack_cycle(weapon: Dictionary) -> float:
 	return maxf(float(weapon.get("attack_speed", weapon.get("cooldown", attack_active_duration + attack_recovery_duration))), attack_active_duration + 0.06)
 
 
-func _get_attack_start_distance() -> float:
-	return 8.0
+func _get_attack_center_distance(weapon: Dictionary) -> float:
+	return _get_attack_visual_length(weapon)
 
 
-func _get_attack_end_distance(weapon: Dictionary) -> float:
-	return _get_attack_visual_length(weapon) + 12.0
-
-
-func _get_attack_half_width(weapon: Dictionary) -> float:
+func _get_attack_hit_radius(weapon: Dictionary) -> float:
 	return maxf(float(weapon.get("attack_width", attack_width)) * 0.5, 14.0)
-
-
-func _get_attack_full_width(weapon: Dictionary) -> float:
-	return _get_attack_half_width(weapon) * 2.0
 
 
 func _debug_attack_state(event: String) -> void:
 	if not debug_attack and not CombatDebug.enabled:
 		return
-	print("attack %s dir=%s hitbox=%s rot=%.2f" % [event, last_direction, attack_area.global_position, attack_area.global_rotation])
+	print("attack %s dir=%s hitbox=%s rot=%.2f" % [event, attack_direction, attack_area.global_position, attack_area.global_rotation])
 
 
 func _get_knockback_direction(hit_direction: Vector2) -> Vector2:
@@ -352,17 +429,13 @@ func _draw_debug_shapes() -> void:
 		draw_arc(hurt_center, hurt_shape.radius, 0.0, TAU, 32, Color(1.0, 0.3, 0.3, 0.95), 2.0)
 
 	var attack_polygon: PackedVector2Array = _get_attack_polygon()
-	if attack_polygon.size() < 3:
+	if attack_polygon.is_empty():
 		return
 
+	var weapon: Dictionary = _get_active_attack_weapon()
 	var debug_color := Color(0.2, 0.85, 1.0, 0.95) if attack_active_timer > 0.0 else Color(0.2, 0.55, 0.9, 0.7)
-	draw_polyline(PackedVector2Array([
-		attack_polygon[0],
-		attack_polygon[1],
-		attack_polygon[2],
-		attack_polygon[3],
-		attack_polygon[0]
-	]), debug_color, 2.0)
+	draw_arc(attack_polygon[0], _get_attack_hit_radius(weapon), 0.0, TAU, 32, debug_color, 2.0)
+	draw_line(_logic_to_local_screen(global_position), attack_polygon[0], debug_color, 2.0)
 
 
 func refresh_combat_debug_draw() -> void:
@@ -377,46 +450,9 @@ func _logic_to_local_screen(logic_position: Vector2) -> Vector2:
 
 
 func _get_attack_polygon() -> PackedVector2Array:
-	var weapon: Dictionary = get_current_weapon()
-	var attack_start: float = _get_attack_start_distance()
-	var attack_end: float = _get_attack_end_distance(weapon)
-	var half_width: float = _get_attack_half_width(weapon)
-	var forward: Vector2 = last_direction
-	var sideways: Vector2 = Vector2(-forward.y, forward.x)
-	var corners: Array[Vector2] = [
-		global_position + forward * attack_start - sideways * half_width,
-		global_position + forward * attack_start + sideways * half_width,
-		global_position + forward * attack_end + sideways * half_width,
-		global_position + forward * attack_end - sideways * half_width
-	]
-
-	var points: PackedVector2Array = []
-	for corner in corners:
-		points.append(_logic_to_local_screen(corner))
-	return points
-
-
-func _to_attack_space(logic_position: Vector2) -> Vector2:
-	var delta: Vector2 = logic_position - global_position
-	if absf(last_direction.x) > 0.0:
-		return Vector2(delta.x * last_direction.x, delta.y)
-	return Vector2(delta.y * last_direction.y, delta.x)
-
-
-func _is_inside_attack_window(
-	attack_space_position: Vector2,
-	attack_start: float,
-	attack_end: float,
-	attack_half_width: float,
-	target_padding: float
-) -> bool:
-	var forward: float = attack_space_position.x
-	var sideways: float = absf(attack_space_position.y)
-	return (
-		forward + target_padding >= attack_start
-		and forward - target_padding <= attack_end
-		and sideways <= attack_half_width + target_padding
-	)
+	return PackedVector2Array([
+		_logic_to_local_screen(global_position + attack_direction * _get_attack_center_distance(_get_active_attack_weapon()))
+	])
 
 
 func _get_render_offset() -> Vector2:
@@ -429,11 +465,15 @@ func _get_sort_anchor_position() -> Vector2:
 
 func _draw_character_shadow(base: Vector2) -> void:
 	var shadow_rect: Rect2 = CharacterVisuals.get_shadow_rect("player", base)
+	if charging_attack:
+		var shadow_scale: float = 1.0 + _get_charge_ratio() * 0.04
+		shadow_rect = _scale_rect_from_bottom_center(shadow_rect, shadow_scale)
 	draw_rect(shadow_rect, Color(0, 0, 0, 0.18))
 
 
 func _draw_character_visual(base: Vector2) -> void:
-	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", CharacterVisuals.cardinal_to_visual_direction(last_direction), _get_visual_state(), base)
+	var visual_state: String = _get_visual_state()
+	var texture_data: Dictionary = CharacterVisuals.get_state_texture_draw_data("player", _get_visual_direction_id(), visual_state, base, _get_visual_frame_id(visual_state))
 	var texture: Texture2D = texture_data.get("texture", null)
 	if texture == null:
 		return
@@ -441,11 +481,118 @@ func _draw_character_visual(base: Vector2) -> void:
 	var modulate: Color = Color.WHITE
 	if hit_timer > 0.0:
 		modulate = Color(1.0, 0.76, 0.76, 1.0)
-
-	draw_texture_rect_region(texture, texture_data.get("draw_rect", Rect2()), texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
+	var draw_rect: Rect2 = texture_data.get("draw_rect", Rect2())
+	if charging_attack:
+		draw_rect = _scale_rect_from_bottom_center(draw_rect, 1.0 + _get_charge_ratio() * charge_visual_scale_bonus)
+	draw_texture_rect_region(texture, draw_rect, texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
 
 
 func _get_visual_state() -> String:
-	if attack_active_timer > 0.0:
+	if hp <= 0 or death_visual_timer > 0.0:
+		return "death"
+	if hit_stun_timer > 0.0 or hit_timer > 0.0:
+		return "hit"
+	if attack_active_timer > 0.0 or attack_recovery_timer > 0.0 or charging_attack:
 		return "attack"
+	if velocity.length_squared() > 9.0:
+		return "walk"
 	return "idle"
+
+
+func _get_visual_direction_id() -> String:
+	var source_direction: Vector2 = attack_direction if attack_active_timer > 0.0 or charging_attack else velocity
+	if source_direction.length_squared() <= 0.001:
+		source_direction = last_direction
+	return CharacterVisuals.vector_to_visual_direction(source_direction)
+
+
+func _get_visual_frame_id(visual_state: String) -> String:
+	if visual_state != "walk":
+		return ""
+	return "1" if int(floor(walk_anim_timer * 7.0)) % 2 == 0 else "2"
+
+
+func _update_walk_animation(delta: float) -> void:
+	if _get_visual_state() == "walk":
+		walk_anim_timer += delta
+		return
+	walk_anim_timer = 0.0
+
+
+func _get_attack_direction_from_mouse() -> Vector2:
+	var mouse_logic: Vector2 = IsoMapper.screen_to_logic(get_global_mouse_position(), render_origin)
+	var direction: Vector2 = mouse_logic - global_position
+	if direction.length_squared() > 0.001:
+		return direction.normalized()
+	if last_direction.length_squared() > 0.001:
+		return last_direction.normalized()
+	return Vector2.DOWN
+
+
+func _is_sprinting() -> bool:
+	return Input.is_key_pressed(KEY_SHIFT)
+
+
+func _build_attack_weapon(base_weapon, charge_ratio: float) -> Dictionary:
+	var charged_weapon: Dictionary = _weapon_data_to_attack_stats(base_weapon)
+	charged_weapon["damage"] = maxi(int(round(float(base_weapon.damage) * (1.0 + charge_ratio))), 1)
+	charged_weapon["attack_range"] = float(base_weapon.attack_range) + charge_ratio * max_charge_bonus_range
+	charged_weapon["knockback"] = float(base_weapon.knockback) * (1.0 + charge_ratio * 1.5)
+	return charged_weapon
+
+
+func _get_active_attack_weapon() -> Dictionary:
+	if not current_attack_weapon.is_empty():
+		return current_attack_weapon
+	return _weapon_data_to_attack_stats(get_current_weapon())
+
+
+func _weapon_data_to_attack_stats(weapon_data) -> Dictionary:
+	if weapon_data == null:
+		weapon_data = WeaponDB.get_default_weapon()
+	return {
+		"id": weapon_data.id,
+		"display_name": weapon_data.display_name,
+		"damage": weapon_data.damage,
+		"attack_range": weapon_data.attack_range,
+		"attack_speed": weapon_data.attack_speed,
+		"attack_width": weapon_data.attack_width,
+		"knockback": weapon_data.knockback,
+		"stun_duration": weapon_data.stun_duration,
+		"color": weapon_data.color
+	}
+
+
+func _get_charge_ratio() -> float:
+	if max_charge_duration <= 0.0:
+		return 0.0
+	return clampf(charge_time / max_charge_duration, 0.0, 1.0)
+
+
+func _cancel_attack_charge() -> void:
+	if not charging_attack and is_zero_approx(charge_time):
+		return
+	charging_attack = false
+	charge_time = 0.0
+	queue_redraw()
+
+
+func _scale_rect_from_bottom_center(rect: Rect2, scale_factor: float) -> Rect2:
+	var scaled_size: Vector2 = rect.size * scale_factor
+	return Rect2(
+		Vector2(
+			rect.position.x + (rect.size.x - scaled_size.x) * 0.5,
+			rect.position.y + rect.size.y - scaled_size.y
+		),
+		scaled_size
+	)
+
+
+func get_attack_charge_ratio() -> float:
+	return _get_charge_ratio() if charging_attack else 0.0
+
+
+func get_attack_feedback_ratio() -> float:
+	if attack_active_duration <= 0.0:
+		return 0.0
+	return clampf(attack_flash_timer / attack_active_duration, 0.0, 1.0)

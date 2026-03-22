@@ -5,8 +5,8 @@
 [sub_resource type="CircleShape2D" id="1"]
 radius = 12.0
 
-[sub_resource type="RectangleShape2D" id="2"]
-size = Vector2(42, 26)
+[sub_resource type="CircleShape2D" id="2"]
+radius = 16.0
 
 [node name="Player" type="CharacterBody2D" groups=["player"]]
 collision_layer = 2

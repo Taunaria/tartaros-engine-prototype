@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/club.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "club"
+display_name = "Knueppel"
+icon = ExtResource("2")
+damage = 2.0
+attack_range = 32.0
+knockback = 184.0
+attack_speed = 0.5
+attack_width = 26.0
+stun_duration = 0.38
+color = Color(0.537255, 0.360784, 0.219608, 1)

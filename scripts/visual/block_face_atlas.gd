@@ -54,7 +54,10 @@ const FACE_REGIONS := {
 	}
 }
 
-const ATLAS_TEXTURE := preload("res://assets/textures/block_faces.svg")
+const ATLAS_TEXTURE_PATH := "res://assets/textures/block_faces_generated.png"
+const FALLBACK_TEXTURE := preload("res://assets/textures/block_faces.svg")
+
+static var atlas_texture_cache: Texture2D = null
 
 
 static func get_regions() -> Dictionary:
@@ -62,4 +65,13 @@ static func get_regions() -> Dictionary:
 
 
 static func get_texture() -> Texture2D:
-	return ATLAS_TEXTURE
+	if atlas_texture_cache != null:
+		return atlas_texture_cache
+
+	var image := Image.load_from_file(ProjectSettings.globalize_path(ATLAS_TEXTURE_PATH))
+	if image == null or image.is_empty():
+		atlas_texture_cache = FALLBACK_TEXTURE
+		return atlas_texture_cache
+
+	atlas_texture_cache = ImageTexture.create_from_image(image)
+	return atlas_texture_cache

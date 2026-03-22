@@ -1,0 +1,181 @@
+{
+  "cell": 256,
+  "placements": [
+    {
+      "name": "skeleton_walk_up_1.png",
+      "row": 1,
+      "col": 2,
+      "box": [
+        512,
+        256,
+        768,
+        512
+      ]
+    },
+    {
+      "name": "skeleton_walk_up_2.png",
+      "row": 1,
+      "col": 3,
+      "box": [
+        768,
+        256,
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_1.png",
+      "row": 1,
+      "col": 4,
+      "box": [
+        1024,
+        256,
+        1280,
+        512
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_2.png",
+      "row": 1,
+      "col": 5,
+      "box": [
+        1280,
+        256,
+        1536,
+        512
+      ]
+    },
+    {
+      "name": "skeleton_walk_left_1.png",
+      "row": 2,
+      "col": 0,
+      "box": [
+        0,
+        512,
+        256,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_left_2.png",
+      "row": 2,
+      "col": 1,
+      "box": [
+        256,
+        512,
+        512,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_right_1.png",
+      "row": 2,
+      "col": 2,
+      "box": [
+        512,
+        512,
+        768,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_right_2.png",
+      "row": 2,
+      "col": 3,
+      "box": [
+        768,
+        512,
+        1024,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_up_left_1.png",
+      "row": 2,
+      "col": 4,
+      "box": [
+        1024,
+        512,
+        1280,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_up_left_2.png",
+      "row": 2,
+      "col": 5,
+      "box": [
+        1280,
+        512,
+        1536,
+        768
+      ]
+    },
+    {
+      "name": "skeleton_walk_up_right_1.png",
+      "row": 3,
+      "col": 0,
+      "box": [
+        0,
+        768,
+        256,
+        1024
+      ]
+    },
+    {
+      "name": "skeleton_walk_up_right_2.png",
+      "row": 3,
+      "col": 1,
+      "box": [
+        256,
+        768,
+        512,
+        1024
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_left_1.png",
+      "row": 3,
+      "col": 2,
+      "box": [
+        512,
+        768,
+        768,
+        1024
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_left_2.png",
+      "row": 3,
+      "col": 3,
+      "box": [
+        768,
+        768,
+        1024,
+        1024
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_right_1.png",
+      "row": 3,
+      "col": 4,
+      "box": [
+        1024,
+        768,
+        1280,
+        1024
+      ]
+    },
+    {
+      "name": "skeleton_walk_down_right_2.png",
+      "row": 3,
+      "col": 5,
+      "box": [
+        1280,
+        768,
+        1536,
+        1024
+      ]
+    }
+  ]
+}

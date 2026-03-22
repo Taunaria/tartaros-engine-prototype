@@ -44,5 +44,5 @@
 
 ## Validation
 
-- Parsed and instantiated with headless Godot via `godot --headless --path . --script res://scripts/dev/validate_project.gd`.
+- Parsed and instantiated with headless Godot via `scripts/dev/validate_project.sh` (wraps `godot --headless --quiet --no-header --log-file /tmp/tartarus-godot.log --path . --script res://scripts/dev/validate_project.gd --check-only`).
 - The local Godot Mono build still prints `.NET: Assemblies not found`, but the GDScript prototype scene loads and the validation script exits successfully.

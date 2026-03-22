@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/weapon_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/textures/ui/weapons/magic_long_sword.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = "magic_long_sword"
+display_name = "Magisches Langschwert"
+icon = ExtResource("2")
+damage = 5.0
+attack_range = 50.0
+knockback = 102.0
+attack_speed = 0.32
+attack_width = 28.0
+stun_duration = 0.84
+color = Color(0.423529, 0.862745, 1, 1)

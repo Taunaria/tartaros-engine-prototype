@@ -1,6 +1,7 @@
 extends Area2D
 
 const IsoMapper := preload("res://scripts/core/iso.gd")
+const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 
 var game: Node = null
 var level_name: String = ""
@@ -37,8 +38,13 @@ func _ready() -> void:
 
 func _draw() -> void:
 	var base: Vector2 = IsoMapper.render_offset(position, render_origin)
+	var texture: Texture2D = ItemVisuals.get_portal_texture(not locked)
+	if texture != null:
+		draw_texture_rect(texture, Rect2(base + Vector2(-24, -34), Vector2(48, 56)), false)
+		return
+
 	var frame_color: Color = Color8(74, 55, 34)
-	var portal_color: Color = Color8(93, 188, 217) if not locked else Color8(88, 88, 88)
+	var portal_color: Color = Color8(93, 188, 217) if not locked else Color8(52, 58, 66)
 	draw_rect(Rect2(base + Vector2(-14, -16), Vector2(28, 32)), frame_color)
 	draw_rect(Rect2(base + Vector2(-10, -12), Vector2(20, 24)), portal_color)
 

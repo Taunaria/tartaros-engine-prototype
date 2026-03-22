@@ -1,0 +1,142 @@
+[
+  {
+    "character": "player",
+    "state": "idle",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/idle_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/idle_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/idle_meta.json"
+  },
+  {
+    "character": "player",
+    "state": "attack",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/attack_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/attack_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/attack_meta.json"
+  },
+  {
+    "character": "player",
+    "state": "hit",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/hit_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/hit_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/hit_meta.json"
+  },
+  {
+    "character": "player",
+    "state": "death",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/death_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/death_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/death_meta.json"
+  },
+  {
+    "character": "player",
+    "state": "walk",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/walk_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/walk_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/player/walk_meta.json"
+  },
+  {
+    "character": "zombie",
+    "state": "idle",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/idle_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/idle_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/idle_meta.json"
+  },
+  {
+    "character": "zombie",
+    "state": "attack",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/attack_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/attack_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/attack_meta.json"
+  },
+  {
+    "character": "zombie",
+    "state": "hit",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/hit_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/hit_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/hit_meta.json"
+  },
+  {
+    "character": "zombie",
+    "state": "death",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/death_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/death_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/death_meta.json"
+  },
+  {
+    "character": "zombie",
+    "state": "walk",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/walk_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/walk_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/zombie/walk_meta.json"
+  },
+  {
+    "character": "skeleton",
+    "state": "idle",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/idle_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/idle_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/idle_meta.json"
+  },
+  {
+    "character": "skeleton",
+    "state": "attack",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/attack_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/attack_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/attack_meta.json"
+  },
+  {
+    "character": "skeleton",
+    "state": "hit",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/hit_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/hit_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/hit_meta.json"
+  },
+  {
+    "character": "skeleton",
+    "state": "death",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/death_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/death_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/death_meta.json"
+  },
+  {
+    "character": "skeleton",
+    "state": "walk",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/walk_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/walk_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/skeleton/walk_meta.json"
+  },
+  {
+    "character": "boss",
+    "state": "idle",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/idle_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/idle_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/idle_meta.json"
+  },
+  {
+    "character": "boss",
+    "state": "attack",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/attack_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/attack_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/attack_meta.json"
+  },
+  {
+    "character": "boss",
+    "state": "hit",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/hit_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/hit_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/hit_meta.json"
+  },
+  {
+    "character": "boss",
+    "state": "death",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/death_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/death_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/death_meta.json"
+  },
+  {
+    "character": "boss",
+    "state": "walk",
+    "base": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/walk_base.png",
+    "mask": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/walk_mask.png",
+    "meta": "/Volumes/Development/source/taunaria.dev/tartaros-engine/tartarus-engine-prototype/tmp/imagegen/character_extension/boss/walk_meta.json"
+  }
+]

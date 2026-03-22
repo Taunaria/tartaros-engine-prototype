@@ -1,10 +1,13 @@
 extends Node2D
 
 const LevelData := preload("res://data/levels/level_data.gd")
+const ItemDB := preload("res://data/items/item_db.gd")
 const LevelScene := preload("res://scenes/levels/Level.tscn")
 const GameCamera := preload("res://scripts/core/game_camera.gd")
 const LevelMusicTheme := preload("res://scripts/audio/level_music_theme.gd")
 const CombatDebug := preload("res://scripts/core/combat_debug.gd")
+const SfxManager := preload("res://scripts/audio/sfx_manager.gd")
+const XpPopupScene := preload("res://scenes/ui/XpPopup.tscn")
 
 @export var level_music_themes: Array[LevelMusicTheme] = []
 
@@ -16,6 +19,7 @@ var combat_music_active: bool = false
 var selected_difficulty_id: String = "normal"
 var difficulty_multiplier: float = 1.0
 var difficulty_selected: bool = false
+var current_level_amulet_collected: bool = false
 
 @onready var level_container: Node2D = $LevelContainer
 @onready var entity_layer: Node2D = $EntityLayer
@@ -24,6 +28,8 @@ var difficulty_selected: bool = false
 @onready var camera: GameCamera = $CameraRig/Camera2D
 @onready var ui: CanvasLayer = $UI
 @onready var sound_theme_manager: SoundThemeManager = $SoundThemeManager
+@onready var sfx_manager: SfxManager = $SfxManager
+@onready var feedback_layer: Node2D = $FeedbackLayer
 
 
 func _ready() -> void:
@@ -32,6 +38,8 @@ func _ready() -> void:
 	player.hp_changed.connect(_on_player_hp_changed)
 	player.weapon_changed.connect(_on_player_weapon_changed)
 	player.died.connect(_on_player_died)
+	if player.has_method("set_game_ref"):
+		player.set_game_ref(self)
 	ui.difficulty_selected.connect(_on_difficulty_selected)
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
@@ -63,6 +71,7 @@ func start_new_run() -> void:
 		ui.show_difficulty_screen()
 		return
 	run_state = "playing"
+	current_level_amulet_collected = false
 	player.reset_for_new_run()
 	player.set_control_enabled(true)
 	ui.hide_overlays()
@@ -71,6 +80,7 @@ func start_new_run() -> void:
 	_load_level(current_level_index)
 	_on_player_hp_changed(player.hp, player.max_hp)
 	_on_player_weapon_changed(player.get_current_weapon())
+	ui.set_amulet_collected(false)
 
 
 func get_difficulty_multiplier() -> float:
@@ -97,11 +107,12 @@ func give_reward(reward: Dictionary) -> void:
 	if reward.is_empty():
 		return
 
+	var item_data = ItemDB.get_item_from_reward(reward)
 	var reward_type: String = reward.get("type", "")
-	if reward_type == "weapon":
-		var weapon_id: String = reward.get("id", "")
-		var unlocked: bool = player.unlock_weapon(weapon_id)
-		player.equip_weapon(weapon_id)
+	if reward_type == "weapon" and item_data != null:
+		var weapon_data = item_data
+		var unlocked: bool = player.unlock_weapon(weapon_data.id)
+		player.equip_weapon(weapon_data.id)
 		var heal_amount: int = reward.get("heal_amount", 0)
 		if not unlocked:
 			heal_amount += 2
@@ -109,15 +120,25 @@ func give_reward(reward: Dictionary) -> void:
 		if heal_amount > 0:
 			healed_amount = player.heal(heal_amount)
 		if unlocked:
-			var message: String = "Gefunden: %s" % reward.get("label", "Waffe")
+			var message: String = "Gefunden: %s" % weapon_data.display_name
 			if healed_amount > 0:
 				message += " und +%d HP" % healed_amount
 			ui.show_pickup_message(message)
 		elif healed_amount > 0:
 			ui.show_pickup_message("Bekannte Waffe. +%d HP" % healed_amount)
+		play_sfx("pickup")
 	elif reward_type == "heal":
 		var healed_amount: int = player.heal(reward.get("amount", 0))
 		ui.show_pickup_message("+%d HP" % healed_amount)
+		play_sfx("pickup")
+	elif reward_type == "amulet" and item_data != null:
+		player.obtain_amulet()
+		current_level_amulet_collected = true
+		ui.show_pickup_message(item_data.display_name if not item_data.display_name.is_empty() else reward.get("label", "Amulett erhalten"))
+		ui.set_amulet_collected(true)
+		play_sfx("pickup")
+		if current_level != null and current_level.has_method("refresh_exit_state"):
+			current_level.refresh_exit_state()
 
 
 func show_interaction_hint(text: String) -> void:
@@ -138,6 +159,7 @@ func _load_level(level_index: int) -> void:
 	if current_level != null:
 		current_level.queue_free()
 
+	current_level_amulet_collected = false
 	set_combat_music_active(false)
 	_apply_level_music_for(levels[level_index].get("id", ""))
 
@@ -146,9 +168,11 @@ func _load_level(level_index: int) -> void:
 	current_level.setup(self, levels[level_index], level_index, levels.size())
 	player.global_position = current_level.get_start_world_position()
 	player.set_render_origin(current_level.get_render_origin())
+	player.clear_amulet()
 	if current_level.has_method("set_active"):
 		current_level.set_active(true)
 	player.set_control_enabled(true)
+	ui.set_amulet_collected(false)
 	ui.show_level_title_text(levels[level_index].get("name", ""))
 	show_interaction_hint("")
 
@@ -161,6 +185,34 @@ func set_level_music(level_theme: AudioStream, action_theme: AudioStream) -> voi
 		sound_theme_manager.enter_action_state()
 	else:
 		sound_theme_manager.exit_action_state()
+
+
+func play_sfx(name: String) -> void:
+	if sfx_manager != null and is_instance_valid(sfx_manager) and sfx_manager.has_method("play_sfx"):
+		sfx_manager.play_sfx(name)
+
+
+func set_sfx_enabled(enabled: bool) -> void:
+	if sfx_manager != null and is_instance_valid(sfx_manager) and sfx_manager.has_method("set_enabled"):
+		sfx_manager.set_enabled(enabled)
+
+
+func set_sfx_volume(value: float) -> void:
+	if sfx_manager != null and is_instance_valid(sfx_manager) and sfx_manager.has_method("set_volume"):
+		sfx_manager.set_volume(value)
+
+
+func spawn_xp_popup(amount: int, world_position: Vector2) -> void:
+	if amount <= 0:
+		return
+	if feedback_layer == null or not is_instance_valid(feedback_layer):
+		return
+	if XpPopupScene == null:
+		return
+	var popup := XpPopupScene.instantiate()
+	feedback_layer.add_child(popup)
+	if popup.has_method("setup"):
+		popup.setup(amount, world_position)
 
 
 func set_combat_music_active(active: bool) -> void:
@@ -196,8 +248,8 @@ func _on_player_hp_changed(current_hp: int, max_hp: int) -> void:
 	ui.set_hp(current_hp, max_hp)
 
 
-func _on_player_weapon_changed(weapon_data: Dictionary) -> void:
-	ui.set_weapon(weapon_data.get("name", "Knueppel"))
+func _on_player_weapon_changed(weapon_data) -> void:
+	ui.set_weapon(weapon_data)
 
 
 func _on_player_died() -> void:
@@ -238,6 +290,10 @@ func get_entity_layer() -> Node2D:
 
 func get_current_level() -> Node:
 	return current_level
+
+
+func has_current_level_amulet() -> bool:
+	return player != null and player.has_amulet
 
 
 func _clear_world_entities() -> void:

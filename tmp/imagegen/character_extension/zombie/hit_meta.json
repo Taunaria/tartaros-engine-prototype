@@ -1,0 +1,93 @@
+{
+  "cell": 256,
+  "placements": [
+    {
+      "name": "zombie_hit_up.png",
+      "row": 1,
+      "col": 2,
+      "box": [
+        512,
+        256,
+        768,
+        512
+      ]
+    },
+    {
+      "name": "zombie_hit_down.png",
+      "row": 1,
+      "col": 3,
+      "box": [
+        768,
+        256,
+        1024,
+        512
+      ]
+    },
+    {
+      "name": "zombie_hit_left.png",
+      "row": 1,
+      "col": 4,
+      "box": [
+        1024,
+        256,
+        1280,
+        512
+      ]
+    },
+    {
+      "name": "zombie_hit_right.png",
+      "row": 1,
+      "col": 5,
+      "box": [
+        1280,
+        256,
+        1536,
+        512
+      ]
+    },
+    {
+      "name": "zombie_hit_up_left.png",
+      "row": 2,
+      "col": 0,
+      "box": [
+        0,
+        512,
+        256,
+        768
+      ]
+    },
+    {
+      "name": "zombie_hit_up_right.png",
+      "row": 2,
+      "col": 1,
+      "box": [
+        256,
+        512,
+        512,
+        768
+      ]
+    },
+    {
+      "name": "zombie_hit_down_left.png",
+      "row": 2,
+      "col": 2,
+      "box": [
+        512,
+        512,
+        768,
+        768
+      ]
+    },
+    {
+      "name": "zombie_hit_down_right.png",
+      "row": 2,
+      "col": 3,
+      "box": [
+        768,
+        512,
+        1024,
+        768
+      ]
+    }
+  ]
+}
