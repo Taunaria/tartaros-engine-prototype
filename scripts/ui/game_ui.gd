@@ -26,7 +26,7 @@ var pickup_message_timer := 0.0
 @onready var death_screen: Control = $DeathScreen
 @onready var victory_screen: Control = $VictoryScreen
 @onready var difficulty_screen: Control = $DifficultyScreen
-@onready var crosshair: TextureRect = $Crosshair
+@onready var crosshair: Sprite2D = $Crosshair
 
 
 func _ready() -> void:
@@ -61,10 +61,13 @@ func _ready() -> void:
 	_set_mouse_passthrough(level_title)
 	hp_bar_under.color = Color8(96, 53, 53)
 	hp_bar_fill.color = Color8(245, 42, 16)
+	weapon_icon.mouse_filter = Control.MOUSE_FILTER_STOP
 	weapon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	weapon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	weapon_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	weapon_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	weapon_icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	weapon_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	weapon_icon.custom_minimum_size = Vector2(120, 120)
+	weapon_label.visible = false
 	amulet_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	hp_label.visible = false
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
@@ -108,6 +111,7 @@ func set_weapon(weapon_data) -> void:
 	var resolved_weapon = weapon_data if weapon_data != null else WeaponDB.get_default_weapon()
 	weapon_label.text = resolved_weapon.display_name if resolved_weapon != null else "Dolch"
 	weapon_icon.texture = resolved_weapon.icon if resolved_weapon != null and resolved_weapon.icon != null else ItemVisuals.get_weapon_icon(WeaponDB.get_default_weapon_id())
+	weapon_icon.tooltip_text = weapon_label.text
 
 
 func set_amulet_collected(collected: bool) -> void:

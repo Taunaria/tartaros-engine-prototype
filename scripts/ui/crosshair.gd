@@ -1,32 +1,33 @@
-extends TextureRect
+extends Sprite2D
 
 const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 
 @export var pulse_speed := 4.0
 @export var pulse_amplitude := 0.05
+@export var target_display_size := 112.0
 
 var pulse_time := 0.0
 var current_scale := 1.0
 var current_tint := Color8(235, 242, 255)
+var base_scale := 0.109375
 
 
 func _ready() -> void:
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_level = true
 	z_as_relative = false
 	z_index = 4000
-	expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	custom_minimum_size = Vector2(112.0, 112.0)
-	size = custom_minimum_size
-	pivot_offset = size * 0.5
+	centered = true
 	texture = ItemVisuals.get_crosshair_texture()
+	if texture == null:
+		texture = _make_fallback_texture()
+	base_scale = target_display_size / maxf(1.0, float(texture.get_width()))
+	scale = Vector2.ONE * base_scale
 	visible = true
 
 
 func _process(delta: float) -> void:
 	pulse_time += delta
-	var mouse_position: Vector2 = get_viewport().get_mouse_position()
-	global_position = mouse_position - (size * 0.5)
+	global_position = get_global_mouse_position()
 	_update_feedback()
 
 
@@ -42,7 +43,7 @@ func _update_feedback() -> void:
 		if player.has_method("get_attack_feedback_ratio"):
 			attack_ratio = player.get_attack_feedback_ratio()
 	current_scale = pulse_scale + charge_ratio * 0.08 + attack_ratio * 0.12 + hover_ratio * 0.04
-	scale = Vector2.ONE * current_scale
+	scale = Vector2.ONE * (base_scale * current_scale)
 	current_tint = Color8(235, 242, 255)
 	if hover_ratio > 0.0:
 		current_tint = current_tint.lerp(Color8(255, 208, 124), minf(hover_ratio * 0.75, 0.75))
@@ -59,7 +60,7 @@ func _get_player() -> Node:
 
 
 func _get_hover_enemy_ratio() -> float:
-	var mouse_position: Vector2 = global_position + (size * 0.5)
+	var mouse_position: Vector2 = global_position
 	var nearest_distance: float = INF
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if enemy == null or not is_instance_valid(enemy):
@@ -71,3 +72,9 @@ func _get_hover_enemy_ratio() -> float:
 	if nearest_distance == INF:
 		return 0.0
 	return clampf(1.0 - nearest_distance / 72.0, 0.0, 1.0)
+
+
+func _make_fallback_texture() -> Texture2D:
+	var image := Image.create(112, 112, false, Image.FORMAT_RGBA8)
+	image.fill(Color(0, 0, 0, 0))
+	return ImageTexture.create_from_image(image)
