@@ -17,6 +17,7 @@ var pickup_message_timer := 0.0
 @onready var hp_fill_clip: Control = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPFillClip
 @onready var hp_bar_fill: ColorRect = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPFillClip/HPBarFill
 @onready var hp_label: Label = $HUD/Panel/MarginContainer/VBoxContainer/HPLabel
+@onready var start_screen_background: TextureRect = $StartScreenBackground
 @onready var hud_root: Control = $HUD
 @onready var top_right_root: Control = $TopRight
 @onready var weapon_icon: TextureRect = $TopRight/Panel/MarginContainer/VBoxContainer/WeaponIcon
@@ -106,6 +107,7 @@ func hide_overlays() -> void:
 	death_screen.visible = false
 	victory_screen.visible = false
 	difficulty_screen.visible = false
+	start_screen_background.visible = false
 	level_title.visible = false
 	hint_label.visible = false
 	message_label.visible = false
@@ -165,8 +167,16 @@ func show_victory_screen() -> void:
 
 func show_difficulty_screen() -> void:
 	hide_overlays()
+	hud_root.visible = false
+	top_right_root.visible = false
 	difficulty_screen.visible = true
+	start_screen_background.visible = true
 	_update_crosshair_visibility()
+
+
+func show_gameplay_hud() -> void:
+	hud_root.visible = true
+	top_right_root.visible = true
 
 
 func refresh_direction_debug_overlay() -> void:

@@ -23,6 +23,7 @@ const CharacterVisuals := preload("res://scripts/visual/character_visuals.gd")
 @export var hit_pause_duration := 0.12
 @export var hit_knockback_speed := 110.0
 @export var hit_knockback_decay := 900.0
+@export var movement_direction_hold_duration := 0.14
 @export var debug_attack := false
 
 var hp := max_hp
@@ -32,6 +33,8 @@ var current_weapon = null
 var has_amulet := false
 var last_direction := Vector2.DOWN
 var attack_direction := Vector2.DOWN
+var movement_direction_hold_vector := Vector2.DOWN
+var movement_direction_hold_timer := 0.0
 var attack_timer := 0.0
 var attack_active_timer := 0.0
 var attack_recovery_timer := 0.0
@@ -120,6 +123,8 @@ func reset_for_new_run() -> void:
 	control_enabled = true
 	last_direction = Vector2.DOWN
 	attack_direction = Vector2.DOWN
+	movement_direction_hold_vector = Vector2.DOWN
+	movement_direction_hold_timer = 0.0
 	hit_targets.clear()
 	knockback_velocity = Vector2.ZERO
 	attack_area.monitoring = false
@@ -226,11 +231,21 @@ func _handle_movement() -> void:
 		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
 		Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
 	)
+	var normalized_direction: Vector2 = direction.normalized() if direction.length_squared() > 0.0 else Vector2.ZERO
+	var movement_key_released: bool = Input.is_action_just_released("move_up") or Input.is_action_just_released("move_down") or Input.is_action_just_released("move_left") or Input.is_action_just_released("move_right")
 
-	if direction.length_squared() > 0.0:
-		last_direction = direction.normalized()
+	if normalized_direction.length_squared() > 0.0:
+		if movement_direction_hold_timer <= 0.0 and movement_key_released and _is_diagonal_direction(last_direction) and not _is_diagonal_direction(normalized_direction):
+			movement_direction_hold_vector = last_direction
+			movement_direction_hold_timer = movement_direction_hold_duration
+		elif movement_direction_hold_timer <= 0.0:
+			last_direction = normalized_direction
+			movement_direction_hold_vector = normalized_direction
+	else:
+		movement_direction_hold_vector = last_direction
+
 	var speed_multiplier: float = sprint_move_multiplier if _is_sprinting() else 1.0
-	velocity = direction.normalized() * move_speed * speed_multiplier
+	velocity = normalized_direction * move_speed * speed_multiplier
 	queue_redraw()
 
 
@@ -375,6 +390,9 @@ func _tick_timers(delta: float) -> void:
 
 	if hit_stun_timer > 0.0:
 		hit_stun_timer = maxf(hit_stun_timer - delta, 0.0)
+
+	if movement_direction_hold_timer > 0.0:
+		movement_direction_hold_timer = maxf(movement_direction_hold_timer - delta, 0.0)
 
 	if death_visual_timer > 0.0:
 		death_visual_timer = maxf(death_visual_timer - delta, 0.0)
@@ -531,6 +549,8 @@ func _get_visual_direction_vector(visual_state: String = "") -> Vector2:
 		visual_state = _get_visual_state()
 
 	var source_direction: Vector2 = attack_direction if visual_state == "attack" else velocity
+	if visual_state != "attack" and movement_direction_hold_timer > 0.0 and movement_direction_hold_vector.length_squared() > 0.001:
+		source_direction = movement_direction_hold_vector
 	if source_direction.length_squared() <= 0.001:
 		source_direction = last_direction
 	if source_direction.length_squared() <= 0.001:
@@ -567,6 +587,10 @@ func _get_attack_direction_from_mouse() -> Vector2:
 
 func _is_sprinting() -> bool:
 	return Input.is_key_pressed(KEY_SHIFT)
+
+
+func _is_diagonal_direction(direction: Vector2) -> bool:
+	return absf(direction.x) > 0.001 and absf(direction.y) > 0.001
 
 
 func _build_attack_weapon(base_weapon, charge_ratio: float) -> Dictionary:

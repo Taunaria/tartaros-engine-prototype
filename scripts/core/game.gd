@@ -86,6 +86,7 @@ func start_new_run() -> void:
 	player.reset_for_new_run()
 	player.set_control_enabled(true)
 	ui.hide_overlays()
+	ui.show_gameplay_hud()
 	current_level_index = 0
 	set_combat_music_active(false)
 	_load_level(current_level_index)
