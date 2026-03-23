@@ -1,8 +1,9 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/game_ui.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/crosshair.gd" id="2"]
 [ext_resource type="Texture2D" path="res://output/imagegen/start_screen_background.png" id="3"]
+[ext_resource type="Script" path="res://scripts/ui/touch_controls_root.gd" id="4"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_start_panel"]
 bg_color = Color(0.06, 0.055, 0.07, 0.86)
@@ -279,6 +280,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 visible = false
+
+[node name="TouchControlsRoot" type="Control" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+visible = false
+script = ExtResource("4")
+
+[node name="VirtualJoystick" type="Control" parent="TouchControlsRoot"]
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -264.0
+offset_right = 264.0
+offset_bottom = -24.0
+grow_vertical = 0
+mouse_filter = 2
+
+[node name="RightTouchHandler" type="Control" parent="TouchControlsRoot"]
+anchors_preset = 0
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Crosshair" type="Sprite2D" parent="."]
 script = ExtResource("2")

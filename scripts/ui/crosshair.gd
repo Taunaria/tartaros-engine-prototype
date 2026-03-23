@@ -12,6 +12,7 @@ var hover_scale_bonus := 0.0
 var attack_scale_bonus := 0.0
 var charge_scale_bonus := 0.0
 var current_tint := Color.WHITE
+var game: Node = null
 
 
 func _ready() -> void:
@@ -28,9 +29,13 @@ func _ready() -> void:
 	visible = true
 
 
+func set_game_ref(game_ref: Node) -> void:
+	game = game_ref
+
+
 func _process(delta: float) -> void:
 	pulse_time += delta
-	global_position = get_global_mouse_position()
+	global_position = _get_target_screen_position()
 	_update_feedback()
 
 
@@ -79,6 +84,12 @@ func _get_hover_enemy_ratio() -> float:
 	if nearest_distance == INF:
 		return 0.0
 	return clampf(1.0 - nearest_distance / 72.0, 0.0, 1.0)
+
+
+func _get_target_screen_position() -> Vector2:
+	if game != null and is_instance_valid(game) and game.has_method("get_aim_screen_position"):
+		return game.get_aim_screen_position()
+	return get_global_mouse_position()
 
 
 func _make_fallback_texture() -> Texture2D:

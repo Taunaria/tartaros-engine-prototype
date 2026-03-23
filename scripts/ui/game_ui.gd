@@ -11,6 +11,8 @@ const IsoMapper := preload("res://scripts/core/iso.gd")
 
 var level_title_timer := 0.0
 var pickup_message_timer := 0.0
+var game_ref: Node = null
+var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 
 @onready var hp_bar_wrap: Control = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap
 @onready var hp_bar_under: ColorRect = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPBarUnder
@@ -26,6 +28,7 @@ var pickup_message_timer := 0.0
 @onready var level_title: Label = $LevelTitle
 @onready var hint_label: Label = $HintLabel
 @onready var message_label: Label = $MessageLabel
+@onready var touch_controls_root: Control = $TouchControlsRoot
 @onready var death_screen: Control = $DeathScreen
 @onready var victory_screen: Control = $VictoryScreen
 @onready var difficulty_screen: Control = $DifficultyScreen
@@ -83,6 +86,8 @@ func _ready() -> void:
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
 	amulet_icon.texture = ItemVisuals.get_amulet_icon()
 	set_amulet_collected(false)
+	if touch_controls_root != null and touch_controls_root.has_method("set_mobile_enabled"):
+		touch_controls_root.set_mobile_enabled(mobile_platform)
 	_configure_direction_debug_overlay()
 	hide_overlays()
 	call_deferred("_refresh_hp_fill")
@@ -111,6 +116,7 @@ func hide_overlays() -> void:
 	level_title.visible = false
 	hint_label.visible = false
 	message_label.visible = false
+	_set_touch_controls_active(false)
 	_update_crosshair_visibility()
 
 
@@ -138,9 +144,9 @@ func show_level_title_text(text: String) -> void:
 	level_title.visible = true
 
 
-func show_interaction_hint(text: String) -> void:
-	hint_label.text = text
-	hint_label.visible = not text.is_empty()
+func show_interaction_hint(_text: String) -> void:
+	hint_label.text = ""
+	hint_label.visible = false
 
 
 func show_pickup_message(text: String) -> void:
@@ -154,6 +160,7 @@ func show_pickup_message(text: String) -> void:
 func show_death_screen() -> void:
 	death_screen.visible = true
 	victory_screen.visible = false
+	_set_touch_controls_active(false)
 	show_interaction_hint("")
 	_update_crosshair_visibility()
 
@@ -161,6 +168,7 @@ func show_death_screen() -> void:
 func show_victory_screen() -> void:
 	victory_screen.visible = true
 	death_screen.visible = false
+	_set_touch_controls_active(false)
 	show_interaction_hint("")
 	_update_crosshair_visibility()
 
@@ -177,6 +185,21 @@ func show_difficulty_screen() -> void:
 func show_gameplay_hud() -> void:
 	hud_root.visible = true
 	top_right_root.visible = true
+	_set_touch_controls_active(true)
+	_update_crosshair_visibility()
+
+
+func set_game_ref(new_game_ref: Node) -> void:
+	game_ref = new_game_ref
+	if game_ref != null and game_ref.has_method("is_mobile_platform"):
+		mobile_platform = game_ref.is_mobile_platform()
+	if crosshair != null and is_instance_valid(crosshair) and crosshair.has_method("set_game_ref"):
+		crosshair.set_game_ref(game_ref)
+	if touch_controls_root != null and is_instance_valid(touch_controls_root) and touch_controls_root.has_method("set_game_ref"):
+		touch_controls_root.set_game_ref(game_ref)
+	if touch_controls_root != null and is_instance_valid(touch_controls_root) and touch_controls_root.has_method("set_mobile_enabled"):
+		touch_controls_root.set_mobile_enabled(mobile_platform)
+	_update_crosshair_visibility()
 
 
 func refresh_direction_debug_overlay() -> void:
@@ -185,10 +208,24 @@ func refresh_direction_debug_overlay() -> void:
 
 func _update_crosshair_visibility() -> void:
 	var overlays_visible: bool = death_screen.visible or victory_screen.visible or difficulty_screen.visible
+	if mobile_platform:
+		crosshair.visible = not overlays_visible
+		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		return
+
 	var mouse_inside_viewport: bool = get_viewport().get_visible_rect().has_point(get_viewport().get_mouse_position())
 	var show_crosshair: bool = not overlays_visible and mouse_inside_viewport
 	crosshair.visible = show_crosshair
 	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if show_crosshair else Input.MOUSE_MODE_VISIBLE)
+
+
+func _set_touch_controls_active(active: bool) -> void:
+	if touch_controls_root == null or not is_instance_valid(touch_controls_root):
+		return
+	if touch_controls_root.has_method("set_gameplay_active"):
+		touch_controls_root.set_gameplay_active(active and mobile_platform)
+	else:
+		touch_controls_root.visible = active and mobile_platform
 
 
 func _configure_direction_debug_overlay() -> void:

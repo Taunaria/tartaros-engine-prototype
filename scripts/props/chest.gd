@@ -6,13 +6,14 @@ const ChestOpenTexture := preload("res://output/imagegen/props/chest_open.png")
 
 var reward_data: Dictionary = {}
 var game: Node = null
+var level: Node = null
 var opened: bool = false
-var player_in_range: bool = false
 var render_origin: Vector2 = Vector2.ZERO
 
 
-func setup(game_ref: Node, reward: Dictionary) -> void:
+func setup(game_ref: Node, level_ref: Node, reward: Dictionary) -> void:
 	game = game_ref
+	level = level_ref
 	reward_data = reward.duplicate(true)
 	queue_redraw()
 
@@ -28,26 +29,29 @@ func set_render_origin(new_render_origin: Vector2) -> void:
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	add_to_group("player_attack_openables")
 
 
-func _process(_delta: float) -> void:
-	if opened or not player_in_range:
-		return
+func open_chest() -> bool:
+	if opened:
+		return false
 
-	if Input.is_action_just_pressed("interact") and game != null:
-		opened = true
-		if game.has_method("play_sfx"):
-			game.play_sfx("chest_open")
-		if game.has_method("spawn_xp_popup"):
-			game.spawn_xp_popup(25, global_position)
-		game.give_reward(reward_data)
-		game.show_interaction_hint("")
-		monitoring = false
-		collision_layer = 0
-		collision_mask = 0
-		queue_redraw()
+	opened = true
+	remove_from_group("player_attack_openables")
+	monitoring = false
+	collision_layer = 0
+	collision_mask = 0
+	if game != null and game.has_method("play_sfx"):
+		game.play_sfx("chest_open")
+	if game != null and game.has_method("spawn_xp_popup"):
+		game.spawn_xp_popup(25, global_position)
+	if not reward_data.is_empty():
+		if level != null and level.has_method("spawn_pickup_at_world"):
+			level.spawn_pickup_at_world(global_position, reward_data)
+		elif game != null and game.has_method("give_reward"):
+			game.give_reward(reward_data)
+	queue_redraw()
+	return true
 
 
 func _draw() -> void:
@@ -63,21 +67,3 @@ func _draw() -> void:
 	var chest_rect := Rect2(base + Vector2(-draw_size.x * 0.5, -draw_size.y + 18.0), draw_size)
 	draw_rect(Rect2(chest_rect.position + Vector2(6, 10), Vector2(chest_rect.size.x - 12.0, 10.0)), Color(0, 0, 0, 0.18))
 	draw_texture_rect(texture, chest_rect, false)
-
-
-func _on_body_entered(body: Node) -> void:
-	if opened or not body.is_in_group("player"):
-		return
-
-	player_in_range = true
-	if game != null:
-		game.show_interaction_hint("E: Kiste oeffnen")
-
-
-func _on_body_exited(body: Node) -> void:
-	if not body.is_in_group("player"):
-		return
-
-	player_in_range = false
-	if game != null:
-		game.show_interaction_hint("")

@@ -4,6 +4,7 @@ const LevelData := preload("res://data/levels/level_data.gd")
 const ItemDB := preload("res://data/items/item_db.gd")
 const LevelScene := preload("res://scenes/levels/Level.tscn")
 const GameCamera := preload("res://scripts/core/game_camera.gd")
+const IsoMapper := preload("res://scripts/core/iso.gd")
 const LevelMusicTheme := preload("res://scripts/audio/level_music_theme.gd")
 const CombatDebug := preload("res://scripts/core/combat_debug.gd")
 const SfxManager := preload("res://scripts/audio/sfx_manager.gd")
@@ -20,6 +21,11 @@ var selected_difficulty_id: String = "normal"
 var difficulty_multiplier: float = 1.0
 var difficulty_selected: bool = false
 var current_level_amulet_collected: bool = false
+var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
+var touch_move_vector: Vector2 = Vector2.ZERO
+var touch_aim_screen_position: Vector2 = Vector2.ZERO
+var touch_attack_pressed: bool = false
+var touch_attack_held: bool = false
 
 @onready var level_container: Node2D = $LevelContainer
 @onready var entity_layer: Node2D = $EntityLayer
@@ -33,6 +39,7 @@ var current_level_amulet_collected: bool = false
 
 
 func _ready() -> void:
+	add_to_group("game")
 	camera.apply_defaults()
 	levels = LevelData.get_levels()
 	player.hp_changed.connect(_on_player_hp_changed)
@@ -40,6 +47,8 @@ func _ready() -> void:
 	player.died.connect(_on_player_died)
 	if player.has_method("set_game_ref"):
 		player.set_game_ref(self)
+	if ui != null and is_instance_valid(ui) and ui.has_method("set_game_ref"):
+		ui.set_game_ref(self)
 	ui.difficulty_selected.connect(_on_difficulty_selected)
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
@@ -101,6 +110,85 @@ func get_difficulty_multiplier() -> float:
 
 func get_difficulty_id() -> String:
 	return selected_difficulty_id
+
+
+func is_mobile_platform() -> bool:
+	return mobile_platform
+
+
+func is_desktop_platform() -> bool:
+	return OS.has_feature("desktop") or not mobile_platform
+
+
+func set_touch_move_vector(move_vector: Vector2) -> void:
+	if not mobile_platform:
+		touch_move_vector = Vector2.ZERO
+		return
+	touch_move_vector = move_vector if move_vector.length_squared() <= 1.0 else move_vector.normalized()
+
+
+func set_touch_aim_screen_position(screen_position: Vector2) -> void:
+	if not mobile_platform:
+		return
+	touch_aim_screen_position = screen_position
+
+
+func set_touch_attack_pressed() -> void:
+	if not mobile_platform:
+		return
+	touch_attack_pressed = true
+
+
+func set_touch_attack_held(held: bool) -> void:
+	if not mobile_platform:
+		touch_attack_held = false
+		return
+	touch_attack_held = held
+
+
+func reset_touch_input_state() -> void:
+	touch_move_vector = Vector2.ZERO
+	touch_attack_pressed = false
+	touch_attack_held = false
+	touch_aim_screen_position = get_viewport_rect().size * 0.5
+
+
+func get_move_vector() -> Vector2:
+	if mobile_platform:
+		return touch_move_vector
+	return Vector2(
+		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
+		Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
+	)
+
+
+func get_aim_screen_position() -> Vector2:
+	if mobile_platform:
+		return touch_aim_screen_position
+	return get_global_mouse_position()
+
+
+func get_aim_vector(reference_world_position: Vector2, render_origin: Vector2) -> Vector2:
+	var aim_screen_position: Vector2 = get_aim_screen_position()
+	var aim_logic_position: Vector2 = IsoMapper.screen_to_logic(aim_screen_position, render_origin)
+	var aim_direction: Vector2 = aim_logic_position - reference_world_position
+	if aim_direction.length_squared() > 0.001:
+		return aim_direction.normalized()
+	return Vector2.ZERO
+
+
+func get_attack_pressed() -> bool:
+	if mobile_platform:
+		var pressed: bool = touch_attack_pressed
+		touch_attack_pressed = false
+		return pressed
+	return Input.is_action_just_pressed("attack")
+
+
+func get_attack_held() -> bool:
+	if mobile_platform:
+		return touch_attack_held
+	return Input.is_action_pressed("attack")
 
 
 func advance_to_level(level_index: int) -> void:

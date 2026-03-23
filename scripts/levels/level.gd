@@ -128,14 +128,18 @@ func set_active(value: bool) -> void:
 
 
 func spawn_pickup(tile_position: Vector2i, reward: Dictionary) -> void:
+	spawn_pickup_at_world(tile_to_world(tile_position), reward)
+
+
+func spawn_pickup_at_world(world_position: Vector2, reward: Dictionary) -> void:
 	if reward.is_empty():
 		return
 
 	var pickup: Area2D = PickupScene.instantiate()
-	pickup.position = tile_to_world(tile_position)
+	pickups_root.add_child(pickup)
+	pickup.global_position = world_position
 	pickup.setup(game, reward)
 	pickup.set_render_origin(render_origin)
-	pickups_root.add_child(pickup)
 
 
 func refresh_exit_state() -> void:
@@ -422,7 +426,7 @@ func _spawn_chest(chest_data: Dictionary) -> void:
 
 	var chest: Area2D = ChestScene.instantiate()
 	chest.position = tile_to_world(chest_data.get("position", Vector2i.ZERO))
-	chest.setup(game, chest_data.get("reward", {}))
+	chest.setup(game, self, chest_data.get("reward", {}))
 	chest.set_render_origin(render_origin)
 	props_root.add_child(chest)
 

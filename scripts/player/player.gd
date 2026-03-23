@@ -45,6 +45,7 @@ var walk_anim_timer := 0.0
 var death_visual_timer := 0.0
 var charge_time := 0.0
 var charging_attack := false
+var attack_input_was_held := false
 var current_attack_charge_ratio := 0.0
 var current_attack_weapon: Dictionary = {}
 var render_origin: Vector2 = Vector2.ZERO
@@ -66,7 +67,7 @@ func set_game_ref(game_ref: Node) -> void:
 
 func _physics_process(delta: float) -> void:
 	_tick_timers(delta)
-	attack_direction = _get_attack_direction_from_mouse()
+	attack_direction = _get_attack_direction_from_input()
 
 	_handle_attack_input(delta)
 
@@ -119,6 +120,7 @@ func reset_for_new_run() -> void:
 	death_visual_timer = 0.0
 	charge_time = 0.0
 	charging_attack = false
+	attack_input_was_held = false
 	current_attack_charge_ratio = 0.0
 	current_attack_weapon.clear()
 	control_enabled = true
@@ -228,12 +230,21 @@ func take_damage(amount: int, hit_direction: Vector2 = Vector2.ZERO, knockback_s
 
 
 func _handle_movement() -> void:
-	var direction: Vector2 = Vector2(
-		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
-		Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
-	)
+	var move_input: Vector2 = _get_move_input_vector()
+	var direction: Vector2 = Vector2(move_input.x, move_input.y)
 	var normalized_direction: Vector2 = direction.normalized() if direction.length_squared() > 0.0 else Vector2.ZERO
-	var movement_key_released: bool = Input.is_action_just_released("move_up") or Input.is_action_just_released("move_down") or Input.is_action_just_released("move_left") or Input.is_action_just_released("move_right")
+	var movement_key_released: bool = _did_movement_input_release()
+
+	if _is_mobile_platform():
+		if normalized_direction.length_squared() > 0.0:
+			last_direction = normalized_direction
+			movement_direction_hold_vector = normalized_direction
+		else:
+			movement_direction_hold_vector = last_direction
+		var speed_multiplier: float = sprint_move_multiplier if _is_sprinting() else 1.0
+		velocity = normalized_direction * move_speed * speed_multiplier
+		queue_redraw()
+		return
 
 	if normalized_direction.length_squared() > 0.0:
 		if movement_direction_hold_timer <= 0.0 and movement_key_released and _is_diagonal_direction(last_direction) and not _is_diagonal_direction(normalized_direction):
@@ -251,38 +262,47 @@ func _handle_movement() -> void:
 
 
 func _handle_attack_input(delta: float) -> void:
+	var attack_pressed: bool = _get_attack_pressed()
+	var attack_held: bool = _get_attack_held()
+
 	if not control_enabled:
 		_cancel_attack_charge()
+		attack_input_was_held = attack_held
 		return
 
 	if _is_sprinting():
 		_cancel_attack_charge()
+		attack_input_was_held = attack_held
 		return
 
 	if attack_timer > 0.0 or attack_active_timer > 0.0 or attack_recovery_timer > 0.0 or hit_stun_timer > 0.0:
-		if not Input.is_action_pressed("attack"):
+		if not attack_held:
 			_cancel_attack_charge()
+		attack_input_was_held = attack_held
 		return
 
-	if Input.is_action_just_pressed("attack"):
+	if attack_pressed:
 		charging_attack = true
 		charge_time = 0.0
 		queue_redraw()
-		return
 
 	if not charging_attack:
+		attack_input_was_held = attack_held
 		return
 
-	if Input.is_action_pressed("attack"):
+	if attack_held:
 		charge_time = minf(charge_time + delta, max_charge_duration)
+		attack_input_was_held = attack_held
 		queue_redraw()
 		return
 
-	if Input.is_action_just_released("attack"):
+	if attack_input_was_held and not attack_held:
 		_start_attack()
+		attack_input_was_held = attack_held
 		return
 
 	_cancel_attack_charge()
+	attack_input_was_held = attack_held
 
 
 func _start_attack() -> void:
@@ -367,6 +387,29 @@ func _apply_attack_hits(weapon: Dictionary) -> void:
 			float(weapon.get("stun_duration", 0.0)),
 			current_attack_charge_ratio
 		)
+
+	for target in get_tree().get_nodes_in_group("player_attack_openables"):
+		if target == null or not is_instance_valid(target):
+			continue
+		if not target.has_method("open_chest"):
+			continue
+
+		var target_position: Vector2 = _get_attack_target_position(target)
+		var target_padding: float = _get_target_hit_padding(target) + 2.0
+		var hit_distance: float = target_position.distance_to(attack_center)
+		if hit_distance > attack_radius + target_padding:
+			continue
+
+		var instance_id: int = target.get_instance_id()
+		if hit_targets.has(instance_id):
+			continue
+
+		var opened_target: bool = target.open_chest()
+		if not opened_target:
+			continue
+
+		hit_targets[instance_id] = true
+		_debug_attack_state("open %s" % target.name)
 
 
 func _tick_timers(delta: float) -> void:
@@ -587,6 +630,45 @@ func _get_attack_direction_from_mouse() -> Vector2:
 	return Vector2.DOWN
 
 
+func _get_attack_direction_from_input() -> Vector2:
+	if game != null and game.has_method("get_aim_vector"):
+		var aim_direction: Vector2 = game.get_aim_vector(global_position, render_origin)
+		if aim_direction.length_squared() > 0.001:
+			return aim_direction.normalized()
+		if _is_mobile_platform():
+			if last_direction.length_squared() > 0.001:
+				return last_direction.normalized()
+			return Vector2.DOWN
+	return _get_attack_direction_from_mouse()
+
+
+func _get_move_input_vector() -> Vector2:
+	if game != null and game.has_method("get_move_vector"):
+		return game.get_move_vector()
+	return Vector2(
+		Input.get_action_strength("move_right") - Input.get_action_strength("move_left"),
+		Input.get_action_strength("move_down") - Input.get_action_strength("move_up")
+	)
+
+
+func _get_attack_pressed() -> bool:
+	if game != null and game.has_method("get_attack_pressed"):
+		return game.get_attack_pressed()
+	return Input.is_action_just_pressed("attack")
+
+
+func _get_attack_held() -> bool:
+	if game != null and game.has_method("get_attack_held"):
+		return game.get_attack_held()
+	return Input.is_action_pressed("attack")
+
+
+func _did_movement_input_release() -> bool:
+	if game != null and game.has_method("is_mobile_platform") and game.is_mobile_platform():
+		return false
+	return Input.is_action_just_released("move_up") or Input.is_action_just_released("move_down") or Input.is_action_just_released("move_left") or Input.is_action_just_released("move_right")
+
+
 func _get_movement_direction_vector() -> Vector2:
 	if movement_direction_hold_timer > 0.0 and movement_direction_hold_vector.length_squared() > 0.001:
 		return movement_direction_hold_vector.normalized()
@@ -604,7 +686,13 @@ func _get_aim_direction_vector() -> Vector2:
 
 
 func _is_sprinting() -> bool:
+	if _is_mobile_platform():
+		return false
 	return Input.is_key_pressed(KEY_SHIFT)
+
+
+func _is_mobile_platform() -> bool:
+	return game != null and game.has_method("is_mobile_platform") and game.is_mobile_platform()
 
 
 func _is_diagonal_direction(direction: Vector2) -> bool:
@@ -652,6 +740,7 @@ func _cancel_attack_charge() -> void:
 		return
 	charging_attack = false
 	charge_time = 0.0
+	attack_input_was_held = false
 	queue_redraw()
 
 
