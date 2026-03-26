@@ -89,7 +89,7 @@ func _get_hover_enemy_ratio() -> float:
 func _get_target_screen_position() -> Vector2:
 	if game != null and is_instance_valid(game) and game.has_method("get_aim_screen_position"):
 		return game.get_aim_screen_position()
-	return get_global_mouse_position()
+	return get_viewport().get_mouse_position()
 
 
 func _make_fallback_texture() -> Texture2D:

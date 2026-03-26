@@ -15,7 +15,7 @@ const XpPopupScene := preload("res://scenes/ui/XpPopup.tscn")
 var levels: Array[Dictionary] = []
 var current_level_index: int = 0
 var current_level: Node = null
-var run_state: String = "playing"
+var run_state: String = "landing"
 var combat_music_active: bool = false
 var selected_difficulty_id: String = "normal"
 var difficulty_multiplier: float = 1.0
@@ -40,6 +40,7 @@ var touch_attack_held: bool = false
 
 func _ready() -> void:
 	add_to_group("game")
+	get_tree().paused = false
 	camera.apply_defaults()
 	levels = LevelData.get_levels()
 	player.hp_changed.connect(_on_player_hp_changed)
@@ -50,9 +51,10 @@ func _ready() -> void:
 	if ui != null and is_instance_valid(ui) and ui.has_method("set_game_ref"):
 		ui.set_game_ref(self)
 	ui.difficulty_selected.connect(_on_difficulty_selected)
+	ui.resume_requested.connect(resume_run)
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
-	ui.show_difficulty_screen()
+	ui.show_landing_screen(false)
 
 
 func _process(_delta: float) -> void:
@@ -65,7 +67,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventKey and event.pressed and not event.echo:
 		var key_event := event as InputEventKey
-		if key_event.keycode == KEY_F3 or key_event.physical_keycode == KEY_F3:
+		if key_event.keycode == KEY_ESCAPE or key_event.physical_keycode == KEY_ESCAPE:
+			if run_state == "playing":
+				pause_run()
+				get_viewport().set_input_as_handled()
+		elif key_event.keycode == KEY_F3 or key_event.physical_keycode == KEY_F3:
 			var enabled: bool = CombatDebug.toggle()
 			print("combat_debug=%s" % enabled)
 			_refresh_combat_debug_draw()
@@ -90,8 +96,10 @@ func start_new_run() -> void:
 	if not difficulty_selected:
 		ui.show_difficulty_screen()
 		return
+	get_tree().paused = false
 	run_state = "playing"
 	current_level_amulet_collected = false
+	reset_touch_input_state()
 	player.reset_for_new_run()
 	player.set_control_enabled(true)
 	ui.hide_overlays()
@@ -165,7 +173,7 @@ func get_move_vector() -> Vector2:
 func get_aim_screen_position() -> Vector2:
 	if mobile_platform:
 		return touch_aim_screen_position
-	return get_global_mouse_position()
+	return get_viewport().get_mouse_position()
 
 
 func get_aim_vector(reference_world_position: Vector2, render_origin: Vector2) -> Vector2:
@@ -246,6 +254,7 @@ func show_interaction_hint(text: String) -> void:
 
 
 func complete_demo() -> void:
+	get_tree().paused = false
 	run_state = "victory"
 	player.set_control_enabled(false)
 	if current_level != null and current_level.has_method("set_active"):
@@ -353,6 +362,7 @@ func _on_player_weapon_changed(weapon_data) -> void:
 
 
 func _on_player_died() -> void:
+	get_tree().paused = false
 	run_state = "dead"
 	player.set_control_enabled(false)
 	if current_level != null and current_level.has_method("set_active"):
@@ -371,6 +381,25 @@ func _on_difficulty_selected(difficulty_id: String, multiplier: float) -> void:
 	difficulty_multiplier = multiplier
 	difficulty_selected = true
 	start_new_run()
+
+
+func pause_run() -> void:
+	if run_state != "playing":
+		return
+	run_state = "paused"
+	reset_touch_input_state()
+	ui.show_landing_screen(true)
+	get_tree().paused = true
+
+
+func resume_run() -> void:
+	if run_state != "paused":
+		return
+	get_tree().paused = false
+	run_state = "playing"
+	reset_touch_input_state()
+	ui.hide_overlays()
+	ui.show_gameplay_hud()
 
 
 func _quit_game() -> void:

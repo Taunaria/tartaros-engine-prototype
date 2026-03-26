@@ -3,6 +3,7 @@ extends CanvasLayer
 signal restart_requested
 signal quit_requested
 signal difficulty_selected(difficulty_id: String, multiplier: float)
+signal resume_requested
 
 const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 const WeaponDB := preload("res://data/weapons/weapon_db.gd")
@@ -31,7 +32,10 @@ var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 @onready var touch_controls_root: Control = $TouchControlsRoot
 @onready var death_screen: Control = $DeathScreen
 @onready var victory_screen: Control = $VictoryScreen
-@onready var difficulty_screen: Control = $DifficultyScreen
+@onready var landing_screen: Control = $LandingScreen
+@onready var main_menu: Control = $LandingScreen/Panel/MainMenu
+@onready var difficulty_menu: Control = $LandingScreen/Panel/DifficultyMenu
+@onready var resume_button: Button = $LandingScreen/Panel/MainMenu/VBoxContainer/ResumeButton
 @onready var crosshair: Sprite2D = $Crosshair
 @onready var debug_overlay: Control = $DebugOverlay
 @onready var debug_view_arrow: TextureRect = $DebugOverlay/Panel/MarginContainer/VBoxContainer/ViewRow/ViewArrow
@@ -43,6 +47,7 @@ var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	$DeathScreen/Panel/VBoxContainer/RestartButton.pressed.connect(func() -> void:
 		emit_signal("restart_requested")
 	)
@@ -55,17 +60,31 @@ func _ready() -> void:
 	$VictoryScreen/Panel/VBoxContainer/QuitButton.pressed.connect(func() -> void:
 		emit_signal("quit_requested")
 	)
-	$DifficultyScreen/Panel/VBoxContainer/EasyButton.pressed.connect(func() -> void:
-		difficulty_screen.visible = false
+	$LandingScreen/Panel/MainMenu/VBoxContainer/NewGameButton.pressed.connect(func() -> void:
+		show_difficulty_screen()
+	)
+	$LandingScreen/Panel/MainMenu/VBoxContainer/ResumeButton.pressed.connect(func() -> void:
+		if resume_button.disabled:
+			return
+		emit_signal("resume_requested")
+	)
+	$LandingScreen/Panel/MainMenu/VBoxContainer/QuitButton.pressed.connect(func() -> void:
+		emit_signal("quit_requested")
+	)
+	$LandingScreen/Panel/DifficultyMenu/VBoxContainer/EasyButton.pressed.connect(func() -> void:
+		landing_screen.visible = false
 		emit_signal("difficulty_selected", "easy", 0.5)
 	)
-	$DifficultyScreen/Panel/VBoxContainer/NormalButton.pressed.connect(func() -> void:
-		difficulty_screen.visible = false
+	$LandingScreen/Panel/DifficultyMenu/VBoxContainer/NormalButton.pressed.connect(func() -> void:
+		landing_screen.visible = false
 		emit_signal("difficulty_selected", "normal", 1.0)
 	)
-	$DifficultyScreen/Panel/VBoxContainer/HardButton.pressed.connect(func() -> void:
-		difficulty_screen.visible = false
+	$LandingScreen/Panel/DifficultyMenu/VBoxContainer/HardButton.pressed.connect(func() -> void:
+		landing_screen.visible = false
 		emit_signal("difficulty_selected", "hard", 1.5)
+	)
+	$LandingScreen/Panel/DifficultyMenu/VBoxContainer/BackButton.pressed.connect(func() -> void:
+		_show_main_menu(not resume_button.disabled)
 	)
 	_set_mouse_passthrough(hud_root)
 	_set_mouse_passthrough(top_right_root)
@@ -111,7 +130,7 @@ func _process(delta: float) -> void:
 func hide_overlays() -> void:
 	death_screen.visible = false
 	victory_screen.visible = false
-	difficulty_screen.visible = false
+	landing_screen.visible = false
 	start_screen_background.visible = false
 	level_title.visible = false
 	hint_label.visible = false
@@ -173,16 +192,29 @@ func show_victory_screen() -> void:
 	_update_crosshair_visibility()
 
 
+func show_landing_screen(can_resume: bool = false) -> void:
+	hide_overlays()
+	hud_root.visible = false
+	top_right_root.visible = false
+	landing_screen.visible = true
+	start_screen_background.visible = true
+	_show_main_menu(can_resume)
+	_update_crosshair_visibility()
+
+
 func show_difficulty_screen() -> void:
 	hide_overlays()
 	hud_root.visible = false
 	top_right_root.visible = false
-	difficulty_screen.visible = true
+	landing_screen.visible = true
 	start_screen_background.visible = true
+	_show_difficulty_menu()
 	_update_crosshair_visibility()
 
 
 func show_gameplay_hud() -> void:
+	landing_screen.visible = false
+	start_screen_background.visible = false
 	hud_root.visible = true
 	top_right_root.visible = true
 	_set_touch_controls_active(true)
@@ -207,16 +239,15 @@ func refresh_direction_debug_overlay() -> void:
 
 
 func _update_crosshair_visibility() -> void:
-	var overlays_visible: bool = death_screen.visible or victory_screen.visible or difficulty_screen.visible
+	var overlays_visible: bool = death_screen.visible or victory_screen.visible or landing_screen.visible
 	if mobile_platform:
 		crosshair.visible = not overlays_visible
 		Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 		return
 
-	var mouse_inside_viewport: bool = get_viewport().get_visible_rect().has_point(get_viewport().get_mouse_position())
-	var show_crosshair: bool = not overlays_visible and mouse_inside_viewport
+	var show_crosshair: bool = not overlays_visible
 	crosshair.visible = show_crosshair
-	Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN if show_crosshair else Input.MOUSE_MODE_VISIBLE)
+	Input.set_mouse_mode(Input.MOUSE_MODE_CONFINED_HIDDEN if show_crosshair else Input.MOUSE_MODE_VISIBLE)
 
 
 func _set_touch_controls_active(active: bool) -> void:
@@ -319,3 +350,19 @@ func _set_mouse_passthrough(control: Control) -> void:
 	for child in control.get_children():
 		if child is Control:
 			_set_mouse_passthrough(child as Control)
+
+
+func _show_main_menu(can_resume: bool) -> void:
+	main_menu.visible = true
+	difficulty_menu.visible = false
+	resume_button.disabled = not can_resume
+	if can_resume:
+		resume_button.grab_focus()
+	else:
+		$LandingScreen/Panel/MainMenu/VBoxContainer/NewGameButton.grab_focus()
+
+
+func _show_difficulty_menu() -> void:
+	main_menu.visible = false
+	difficulty_menu.visible = true
+	$LandingScreen/Panel/DifficultyMenu/VBoxContainer/NormalButton.grab_focus()

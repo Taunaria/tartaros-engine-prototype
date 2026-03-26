@@ -273,7 +273,7 @@ text = "Neu starten"
 [node name="QuitButton" type="Button" parent="VictoryScreen/Panel/VBoxContainer"]
 text = "Beenden"
 
-[node name="DifficultyScreen" type="Control" parent="."]
+[node name="LandingScreen" type="Control" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -317,7 +317,7 @@ mouse_filter = 2
 [node name="Crosshair" type="Sprite2D" parent="."]
 script = ExtResource("2")
 
-[node name="Panel" type="Panel" parent="DifficultyScreen"]
+[node name="Panel" type="Panel" parent="LandingScreen"]
 anchor_left = 0.6
 anchor_top = 0.5
 anchor_right = 0.6
@@ -331,30 +331,105 @@ grow_vertical = 2
 custom_minimum_size = Vector2(470, 300)
 theme_override_styles/panel = SubResource("StyleBoxFlat_start_panel")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="DifficultyScreen/Panel"]
+[node name="MainMenu" type="MarginContainer" parent="LandingScreen/Panel"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 offset_left = 28.0
 offset_top = 24.0
 offset_right = -28.0
 offset_bottom = -24.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="LandingScreen/Panel/MainMenu"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
 
-[node name="Title" type="Label" parent="DifficultyScreen/Panel/VBoxContainer"]
+[node name="Title" type="Label" parent="LandingScreen/Panel/MainMenu/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 34
+text = "Tartarus"
+
+[node name="Subtitle" type="Label" parent="LandingScreen/Panel/MainMenu/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 0.92)
+theme_override_font_sizes/font_size = 20
+text = "Wähle deinen nächsten Schritt"
+
+[node name="NewGameButton" type="Button" parent="LandingScreen/Panel/MainMenu/VBoxContainer"]
+custom_minimum_size = Vector2(0, 58)
+theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.96, 0.88, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/focus = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
+text = "Neues Spiel"
+
+[node name="ResumeButton" type="Button" parent="LandingScreen/Panel/MainMenu/VBoxContainer"]
+custom_minimum_size = Vector2(0, 58)
+disabled = true
+theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.96, 0.88, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/focus = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
+text = "Fortsetzen"
+
+[node name="QuitButton" type="Button" parent="LandingScreen/Panel/MainMenu/VBoxContainer"]
+custom_minimum_size = Vector2(0, 58)
+theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.96, 0.88, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/focus = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
+text = "Beenden"
+
+[node name="DifficultyMenu" type="MarginContainer" parent="LandingScreen/Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+offset_left = 28.0
+offset_top = 24.0
+offset_right = -28.0
+offset_bottom = -24.0
+visible = false
+
+[node name="VBoxContainer" type="VBoxContainer" parent="LandingScreen/Panel/DifficultyMenu"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 34
 text = "Schwierigkeit"
 
-[node name="Subtitle" type="Label" parent="DifficultyScreen/Panel/VBoxContainer"]
+[node name="Subtitle" type="Label" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
 horizontal_alignment = 1
 theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 0.92)
 theme_override_font_sizes/font_size = 20
 text = "Beeinflusst nur die Gegneranzahl"
 
-[node name="EasyButton" type="Button" parent="DifficultyScreen/Panel/VBoxContainer"]
+[node name="EasyButton" type="Button" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
 custom_minimum_size = Vector2(0, 58)
 theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
 theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
@@ -366,7 +441,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
 text = "Einfach"
 
-[node name="NormalButton" type="Button" parent="DifficultyScreen/Panel/VBoxContainer"]
+[node name="NormalButton" type="Button" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
 custom_minimum_size = Vector2(0, 58)
 theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
 theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
@@ -378,7 +453,7 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
 text = "Normal"
 
-[node name="HardButton" type="Button" parent="DifficultyScreen/Panel/VBoxContainer"]
+[node name="HardButton" type="Button" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
 custom_minimum_size = Vector2(0, 58)
 theme_override_colors/font_color = Color(0.98, 0.98, 0.98, 1)
 theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
@@ -389,6 +464,18 @@ theme_override_styles/hover = SubResource("StyleBoxFlat_start_button_hover")
 theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
 text = "Schwer"
+
+[node name="BackButton" type="Button" parent="LandingScreen/Panel/DifficultyMenu/VBoxContainer"]
+custom_minimum_size = Vector2(0, 52)
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_colors/font_hover_color = Color(1, 0.97, 0.9, 1)
+theme_override_colors/font_pressed_color = Color(1, 0.96, 0.88, 1)
+theme_override_font_sizes/font_size = 20
+theme_override_styles/focus = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/hover = SubResource("StyleBoxFlat_start_button_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_start_button_normal")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_start_button_pressed")
+text = "Zurück"
 
 [node name="DebugOverlay" type="Control" parent="."]
 anchors_preset = 0

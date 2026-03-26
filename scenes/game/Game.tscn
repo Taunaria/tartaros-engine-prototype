@@ -1,58 +1,56 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene format=3 uid="uid://cvqr2850orgw5"]
 
-[ext_resource type="Script" path="res://scripts/core/game.gd" id="1"]
+[ext_resource type="Script" uid="uid://doxg1ybh5e20n" path="res://scripts/core/game.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2"]
+[ext_resource type="Script" uid="uid://c7bj4nvfpgigh" path="res://scripts/audio/level_music_theme.gd" id="2_60iot"]
 [ext_resource type="PackedScene" path="res://scenes/ui/GameUI.tscn" id="3"]
-[ext_resource type="Script" path="res://scripts/core/game_camera.gd" id="4"]
-[ext_resource type="Script" path="res://scripts/audio/sound_theme_manager.gd" id="5"]
-[ext_resource type="Script" path="res://scripts/audio/sfx_manager.gd" id="12"]
-[ext_resource type="PackedScene" path="res://scenes/ui/XpPopup.tscn" id="13"]
+[ext_resource type="Script" uid="uid://brbxh78kahqev" path="res://scripts/core/game_camera.gd" id="4"]
+[ext_resource type="Script" uid="uid://0xq51q3cv77u" path="res://scripts/audio/sound_theme_manager.gd" id="5"]
 [ext_resource type="Resource" path="res://data/music/village_theme.tres" id="6"]
 [ext_resource type="Resource" path="res://data/music/forest_theme.tres" id="7"]
 [ext_resource type="Resource" path="res://data/music/cave_theme.tres" id="8"]
 [ext_resource type="Resource" path="res://data/music/prison_theme.tres" id="9"]
 [ext_resource type="Resource" path="res://data/music/temple_theme.tres" id="10"]
 [ext_resource type="Resource" path="res://data/music/abyss_theme.tres" id="11"]
+[ext_resource type="Script" uid="uid://drai5uewulwto" path="res://scripts/audio/sfx_manager.gd" id="12"]
 
-[node name="Game" type="Node2D"]
+[node name="Game" type="Node2D" unique_id=1111664399]
+position = Vector2(0, -3)
 script = ExtResource("1")
-level_music_themes = [ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")]
+level_music_themes = Array[ExtResource("2_60iot")]([ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")])
 
-[node name="LevelContainer" type="Node2D" parent="."]
+[node name="LevelContainer" type="Node2D" parent="." unique_id=1862507527]
 
-[node name="EntityLayer" type="Node2D" parent="."]
-z_as_relative = false
+[node name="EntityLayer" type="Node2D" parent="." unique_id=229202802]
 z_index = 1000
+z_as_relative = false
 
-[node name="Player" parent="EntityLayer" instance=ExtResource("2")]
+[node name="Player" parent="EntityLayer" unique_id=1894601144 instance=ExtResource("2")]
 
-[node name="CameraRig" type="Node2D" parent="."]
+[node name="CameraRig" type="Node2D" parent="." unique_id=1340368423]
 
-[node name="Camera2D" type="Camera2D" parent="CameraRig"]
+[node name="Camera2D" type="Camera2D" parent="CameraRig" unique_id=277987236]
 script = ExtResource("4")
 
-
-[node name="SoundThemeManager" type="Node" parent="."]
+[node name="SoundThemeManager" type="Node" parent="." unique_id=291026383]
 script = ExtResource("5")
 
-[node name="MusicA" type="AudioStreamPlayer" parent="SoundThemeManager"]
+[node name="MusicA" type="AudioStreamPlayer" parent="SoundThemeManager" unique_id=1562176497]
 process_mode = 3
 
-[node name="MusicB" type="AudioStreamPlayer" parent="SoundThemeManager"]
+[node name="MusicB" type="AudioStreamPlayer" parent="SoundThemeManager" unique_id=419466141]
 process_mode = 3
 
-[node name="CalmTimer" type="Timer" parent="SoundThemeManager"]
+[node name="CalmTimer" type="Timer" parent="SoundThemeManager" unique_id=381796007]
 process_mode = 3
 
-[node name="SfxManager" type="Node" parent="."]
+[node name="SfxManager" type="Node" parent="." unique_id=521624276]
 script = ExtResource("12")
 
-[node name="UI" parent="." instance=ExtResource("3")]
+[node name="UI" parent="." unique_id=946380383 instance=ExtResource("3")]
 
-[node name="FeedbackLayer" type="Node2D" parent="."]
-z_as_relative = false
+[node name="FeedbackLayer" type="Node2D" parent="." unique_id=1571242650]
 z_index = 3000
-
-
+z_as_relative = false
 
 [connection signal="timeout" from="SoundThemeManager/CalmTimer" to="SoundThemeManager" method="_on_calm_timer_timeout"]
