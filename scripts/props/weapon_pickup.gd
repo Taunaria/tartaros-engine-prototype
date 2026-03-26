@@ -25,7 +25,7 @@ const PICKUP_RISE_DISTANCE := 28.0
 const PICKUP_SCALE_BONUS := 0.35
 const INTRO_DURATION := 0.32
 const INTRO_ARC_HEIGHT := 18.0
-const AUTO_PICKUP_DISTANCE := 24.0
+const AUTO_PICKUP_DISTANCE := 36.0
 
 
 func setup(game_ref: Node, reward: Dictionary, options: Dictionary = {}) -> void:
