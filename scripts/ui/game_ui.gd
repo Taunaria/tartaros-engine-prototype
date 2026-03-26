@@ -93,6 +93,7 @@ func _ready() -> void:
 	_set_mouse_passthrough(level_title)
 	hp_bar_under.color = Color8(96, 53, 53)
 	hp_bar_fill.color = Color8(245, 42, 16)
+	hp_bar_wrap.resized.connect(_refresh_hp_fill)
 	weapon_icon.mouse_filter = Control.MOUSE_FILTER_STOP
 	weapon_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	weapon_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -345,10 +346,11 @@ func _refresh_hp_fill() -> void:
 
 
 func _set_hp_fill_ratio(ratio: float) -> void:
-	var full_width: float = hp_bar_wrap.size.x if hp_bar_wrap.size.x > 0.0 else hp_bar_wrap.custom_minimum_size.x
-	if full_width <= 0.0:
-		full_width = 240.0
-	hp_fill_clip.offset_right = full_width * clampf(ratio, 0.0, 1.0)
+	var clamped_ratio: float = clampf(ratio, 0.0, 1.0)
+	hp_fill_clip.anchor_left = 0.0
+	hp_fill_clip.anchor_right = clamped_ratio
+	hp_fill_clip.offset_left = 0.0
+	hp_fill_clip.offset_right = 0.0
 
 
 func _set_mouse_passthrough(control: Control) -> void:
