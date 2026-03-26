@@ -21,6 +21,7 @@ var selected_difficulty_id: String = "normal"
 var difficulty_multiplier: float = 1.0
 var difficulty_selected: bool = false
 var current_level_amulet_collected: bool = false
+var level_transition_in_progress: bool = false
 var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 var touch_move_vector: Vector2 = Vector2.ZERO
 var touch_aim_screen_position: Vector2 = Vector2.ZERO
@@ -98,6 +99,7 @@ func start_new_run() -> void:
 		return
 	get_tree().paused = false
 	run_state = "playing"
+	level_transition_in_progress = false
 	current_level_amulet_collected = false
 	reset_touch_input_state()
 	player.reset_for_new_run()
@@ -206,13 +208,21 @@ func get_attack_held() -> bool:
 func advance_to_level(level_index: int) -> void:
 	if run_state != "playing":
 		return
+	if level_transition_in_progress:
+		return
 
 	if level_index < 0 or level_index >= levels.size():
 		complete_demo()
 		return
 
+	level_transition_in_progress = true
 	current_level_index = level_index
 	_load_level(current_level_index)
+	call_deferred("_finish_level_transition")
+
+
+func _finish_level_transition() -> void:
+	level_transition_in_progress = false
 
 
 func give_reward(reward: Dictionary) -> Dictionary:

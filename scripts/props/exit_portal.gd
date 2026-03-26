@@ -53,4 +53,8 @@ func _on_body_entered(body: Node) -> void:
 	if locked or not body.is_in_group("player") or game == null:
 		return
 
+	locked = true
+	monitoring = false
+	collision_layer = 0
+	collision_mask = 0
 	game.advance_to_level(next_level_index)
