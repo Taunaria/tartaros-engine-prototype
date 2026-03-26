@@ -24,6 +24,10 @@ const VISUALS := {
 		"default_texture_path": "res://assets/textures/characters/generated/player_warrior.png",
 		"directional_prefix": "player",
 		"state_direction_overrides": {
+			"walk": {
+				"left": "right",
+				"right": "left"
+			},
 			"attack": {
 				"left": "right",
 				"right": "left"

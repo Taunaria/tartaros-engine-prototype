@@ -571,6 +571,8 @@ func _draw_character_visual(base: Vector2) -> void:
 	var draw_rect: Rect2 = texture_data.get("draw_rect", Rect2())
 	if charging_attack:
 		draw_rect = _scale_rect_from_bottom_center(draw_rect, 1.0 + _get_charge_ratio() * charge_visual_scale_bonus)
+	if visual_state == "walk":
+		draw_rect = _apply_walk_motion_offset(draw_rect, visual_direction, visual_frame_id)
 	draw_texture_rect_region(texture, draw_rect, texture_data.get("source_rect", Rect2(Vector2.ZERO, texture.get_size())), modulate, false, true)
 	if CombatDebug.direction_overlay_enabled:
 		_draw_direction_debug_arrows(draw_rect)
@@ -606,6 +608,9 @@ func _get_visual_direction_vector(visual_state: String = "") -> Vector2:
 func _get_visual_frame_id(visual_state: String) -> String:
 	if visual_state != "walk":
 		return ""
+	var visual_direction: String = _get_visual_direction_id(visual_state)
+	if visual_direction != "up" and visual_direction != "down":
+		return "1"
 	return "1" if int(floor(walk_anim_timer * 7.0)) % 2 == 0 else "2"
 
 
@@ -614,6 +619,17 @@ func _update_walk_animation(delta: float) -> void:
 		walk_anim_timer += delta
 		return
 	walk_anim_timer = 0.0
+
+
+func _apply_walk_motion_offset(rect: Rect2, direction_id: String, frame_id: String) -> Rect2:
+	if frame_id.is_empty() or direction_id == "up" or direction_id == "down":
+		return rect
+
+	var bob_phase: float = walk_anim_timer * TAU * 3.5
+	var lift: float = -absf(sin(bob_phase)) * 2.2
+	var stretch: float = 1.0 + absf(sin(bob_phase)) * 0.025
+	var stepped_rect := _scale_rect_from_bottom_center(rect, stretch)
+	return Rect2(stepped_rect.position + Vector2(0.0, lift), stepped_rect.size)
 
 
 func _is_attack_visual_state() -> bool:
