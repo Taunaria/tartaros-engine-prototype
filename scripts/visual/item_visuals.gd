@@ -10,6 +10,7 @@ const WEAPON_ICON_PATHS := {
 	"dagger": "res://assets/textures/ui/weapons/dagger.png",
 	"club": "res://assets/textures/ui/weapons/club.png",
 	"woodcutter_axe": "res://assets/textures/ui/weapons/woodcutter_axe.png",
+	"pickaxe": "res://assets/textures/ui/weapons/pickaxe.png",
 	"short_sword": "res://assets/textures/ui/weapons/short_sword.png",
 	"long_sword": "res://assets/textures/ui/weapons/long_sword.png",
 	"magic_long_sword": "res://assets/textures/ui/weapons/magic_long_sword.png"

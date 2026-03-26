@@ -301,7 +301,7 @@ static func _cave_level() -> Dictionary:
 		"exit": Vector2i(28, 4),
 		"chest": {
 			"position": Vector2i(24, 24),
-			"reward": {"type": "weapon", "id": "short_sword", "label": "Kurzschwert"}
+			"reward": {"type": "weapon", "id": "pickaxe", "label": "Spitzhacke"}
 		},
 		"amulet": {
 			"position": Vector2i(22, 24),
@@ -400,7 +400,7 @@ static func _prison_level() -> Dictionary:
 		"exit": Vector2i(28, 4),
 		"chest": {
 			"position": Vector2i(26, 24),
-			"reward": {"type": "heal", "amount": 4, "label": "Grosser Trank"}
+			"reward": {"type": "weapon", "id": "short_sword", "label": "Kurzschwert"}
 		},
 		"amulet": {
 			"position": Vector2i(24, 23),

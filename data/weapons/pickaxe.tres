@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://dmpgkuge3e5j6"]
+
+[ext_resource type="Script" uid="uid://dmcewnyvwtxo4" path="res://scripts/items/weapon_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+damage = 2.0
+attack_range = 40.0
+knockback = 150.0
+attack_speed = 0.58
+attack_width = 30.0
+stun_duration = 0.68
+color = Color(0.666667, 0.713726, 0.756863, 1)
+id = "pickaxe"
+display_name = "Spitzhacke"

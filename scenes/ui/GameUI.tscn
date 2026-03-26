@@ -218,15 +218,6 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 28
 text = "Level"
 
-[node name="TransitionDebugLabel" type="Label" parent="."]
-offset_left = 400.0
-offset_top = 84.0
-offset_right = 1040.0
-offset_bottom = 126.0
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 18
-text = ""
-
 [node name="DeathScreen" type="CenterContainer" parent="."]
 anchors_preset = 15
 anchor_right = 1.0
