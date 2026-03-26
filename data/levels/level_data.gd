@@ -93,6 +93,7 @@ static func _village_level() -> Dictionary:
 	return {
 		"id": "village",
 		"name": "Das Dorf",
+		"next_level_id": "forest",
 		"theme": "village",
 		"size": Vector2i(32, 32),
 		"start": Vector2i(3, 27),
@@ -199,6 +200,7 @@ static func _forest_level() -> Dictionary:
 	return {
 		"id": "forest",
 		"name": "Der Wald",
+		"next_level_id": "cave",
 		"theme": "forest",
 		"size": Vector2i(32, 32),
 		"start": Vector2i(3, 28),
@@ -292,6 +294,7 @@ static func _cave_level() -> Dictionary:
 	return {
 		"id": "cave",
 		"name": "Die Hoehle",
+		"next_level_id": "prison",
 		"theme": "cave",
 		"size": Vector2i(32, 32),
 		"start": Vector2i(3, 28),
@@ -390,6 +393,7 @@ static func _prison_level() -> Dictionary:
 	return {
 		"id": "prison",
 		"name": "Das Gefaengnis",
+		"next_level_id": "temple",
 		"theme": "prison",
 		"size": Vector2i(32, 32),
 		"start": Vector2i(3, 28),
@@ -475,6 +479,7 @@ static func _temple_level() -> Dictionary:
 	return {
 		"id": "temple",
 		"name": "Der Tempel",
+		"next_level_id": "abyss",
 		"theme": "temple",
 		"size": Vector2i(32, 32),
 		"start": Vector2i(15, 28),

@@ -58,11 +58,7 @@ func _ready() -> void:
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
 	ui.show_landing_screen(false)
-	if ui != null and is_instance_valid(ui):
-		if ui.has_method("set_xp"):
-			ui.set_xp(total_xp)
-		if ui.has_method("set_gold"):
-			ui.set_gold(total_gold)
+	_sync_ui_state()
 
 
 func _process(_delta: float) -> void:
@@ -118,13 +114,6 @@ func start_new_run() -> void:
 	current_level_index = 0
 	set_combat_music_active(false)
 	_load_level(current_level_index)
-	_on_player_hp_changed(player.hp, player.max_hp)
-	_on_player_weapon_changed(player.get_current_weapon())
-	ui.set_amulet_collected(false)
-	if ui.has_method("set_xp"):
-		ui.set_xp(total_xp)
-	if ui.has_method("set_gold"):
-		ui.set_gold(total_gold)
 
 
 func get_difficulty_multiplier() -> float:
@@ -244,6 +233,13 @@ func advance_to_level(level_index: int) -> void:
 	call_deferred("_finish_level_transition")
 
 
+func advance_to_level_id(level_id: String) -> void:
+	if level_id.is_empty():
+		complete_demo()
+		return
+	advance_to_level(_get_level_index_by_id(level_id))
+
+
 func _finish_level_transition() -> void:
 	level_transition_in_progress = false
 
@@ -348,6 +344,7 @@ func _load_level(level_index: int) -> void:
 	ui.set_amulet_collected(false)
 	ui.show_level_title_text(levels[level_index].get("name", ""))
 	show_interaction_hint("")
+	_sync_ui_state(true)
 
 
 func set_level_music(level_theme: AudioStream, action_theme: AudioStream) -> void:
@@ -486,10 +483,33 @@ func resume_run() -> void:
 	reset_touch_input_state()
 	ui.hide_overlays()
 	ui.show_gameplay_hud()
+	_sync_ui_state()
 
 
 func _quit_game() -> void:
 	get_tree().quit()
+
+
+func _sync_ui_state(ensure_gameplay_hud: bool = false) -> void:
+	if ui == null or not is_instance_valid(ui):
+		return
+	if ensure_gameplay_hud and run_state == "playing":
+		ui.show_gameplay_hud()
+	if player != null and is_instance_valid(player):
+		ui.set_hp(player.hp, player.max_hp)
+		ui.set_weapon(player.get_current_weapon())
+	if ui.has_method("set_xp"):
+		ui.set_xp(total_xp)
+	if ui.has_method("set_gold"):
+		ui.set_gold(total_gold)
+	ui.set_amulet_collected(current_level_amulet_collected)
+
+
+func _get_level_index_by_id(level_id: String) -> int:
+	for index in range(levels.size()):
+		if String(levels[index].get("id", "")) == level_id:
+			return index
+	return -1
 
 
 func _refresh_combat_debug_draw() -> void:

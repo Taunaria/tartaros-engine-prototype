@@ -103,7 +103,11 @@ func _ready() -> void:
 	weapon_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	weapon_icon.custom_minimum_size = Vector2(120, 120)
 	weapon_label.visible = false
+	amulet_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	amulet_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	amulet_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	amulet_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	amulet_icon.custom_minimum_size = Vector2(42, 42)
 	hp_label.visible = true
 	set_gold(0)
 	set_xp(0)

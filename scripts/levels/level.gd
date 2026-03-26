@@ -456,10 +456,10 @@ func _spawn_exit(current_level_index: int, total_levels: int) -> void:
 
 	exit_portal = ExitScene.instantiate()
 	exit_portal.position = tile_to_world(exit_tile)
-	var next_index: int = current_level_index + 1
+	var target_level_id: String = String(level_data.get("next_level_id", ""))
 	if current_level_index >= total_levels - 1:
-		next_index = -1
-	exit_portal.setup(game, next_index, level_data.get("name", ""))
+		target_level_id = ""
+	exit_portal.setup(game, target_level_id, level_data.get("name", ""))
 	exit_portal.set_render_origin(render_origin)
 	props_root.add_child(exit_portal)
 	_update_exit_state()

@@ -5,14 +5,14 @@ const ItemVisuals := preload("res://scripts/visual/item_visuals.gd")
 
 var game: Node = null
 var level_name: String = ""
-var next_level_index: int = -1
+var next_level_id: String = ""
 var locked: bool = true
 var render_origin: Vector2 = Vector2.ZERO
 
 
-func setup(game_ref: Node, target_level_index: int, label: String) -> void:
+func setup(game_ref: Node, target_level_id: String, label: String) -> void:
 	game = game_ref
-	next_level_index = target_level_index
+	next_level_id = target_level_id
 	level_name = label
 	queue_redraw()
 
@@ -57,4 +57,5 @@ func _on_body_entered(body: Node) -> void:
 	monitoring = false
 	collision_layer = 0
 	collision_mask = 0
-	game.advance_to_level(next_level_index)
+	if game.has_method("advance_to_level_id"):
+		game.advance_to_level_id(next_level_id)
