@@ -342,7 +342,7 @@ func spawn_xp_popup(amount: int, world_position: Vector2) -> void:
 	var popup := XpPopupScene.instantiate()
 	feedback_layer.add_child(popup)
 	if popup.has_method("setup"):
-		popup.setup(amount, world_position)
+		popup.setup(amount, _logic_to_feedback_position(world_position))
 
 
 func spawn_text_popup(text: String, world_position: Vector2, color: Color = Color.WHITE) -> void:
@@ -355,7 +355,13 @@ func spawn_text_popup(text: String, world_position: Vector2, color: Color = Colo
 	var popup := XpPopupScene.instantiate()
 	feedback_layer.add_child(popup)
 	if popup.has_method("setup_text"):
-		popup.setup_text(text, world_position, color)
+		popup.setup_text(text, _logic_to_feedback_position(world_position), color)
+
+
+func _logic_to_feedback_position(world_position: Vector2) -> Vector2:
+	if current_level != null and is_instance_valid(current_level) and current_level.has_method("get_render_origin"):
+		return IsoMapper.logic_to_screen(world_position, current_level.get_render_origin())
+	return world_position
 
 
 func set_combat_music_active(active: bool) -> void:

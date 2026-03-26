@@ -63,6 +63,8 @@ func _process(delta: float) -> void:
 			_tick_intro_animation(delta)
 		"pickup":
 			_tick_pickup_animation(delta)
+		"idle":
+			_try_collect_overlapping_player()
 	queue_redraw()
 
 
@@ -112,7 +114,20 @@ func _draw() -> void:
 
 
 func _on_body_entered(body: Node) -> void:
-	if animation_state != "idle" or not body.is_in_group("player") or game == null:
+	_try_collect(body)
+
+
+func _try_collect_overlapping_player() -> void:
+	if animation_state != "idle" or not monitoring:
+		return
+	for body in get_overlapping_bodies():
+		if body != null and is_instance_valid(body) and body.is_in_group("player"):
+			_try_collect(body)
+			return
+
+
+func _try_collect(body: Node) -> void:
+	if animation_state != "idle" or body == null or not is_instance_valid(body) or not body.is_in_group("player") or game == null:
 		return
 
 	if reward_data.get("type", "") == "amulet" and game.has_method("spawn_xp_popup"):
@@ -122,7 +137,7 @@ func _on_body_entered(body: Node) -> void:
 		return
 	var popup_text: String = result.get("stat_popup_text", "")
 	if not popup_text.is_empty() and game.has_method("spawn_text_popup"):
-		game.spawn_text_popup(popup_text, global_position + Vector2(0.0, -20.0), result.get("stat_popup_color", Color.WHITE))
+		game.spawn_text_popup(popup_text, global_position, result.get("stat_popup_color", Color.WHITE))
 	animation_state = "pickup"
 	pickup_elapsed = 0.0
 	monitoring = false
