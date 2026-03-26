@@ -57,5 +57,7 @@ func _on_body_entered(body: Node) -> void:
 	monitoring = false
 	collision_layer = 0
 	collision_mask = 0
-	if game.has_method("advance_to_level_id"):
+	if game.has_method("advance_to_level_via_portal"):
+		game.advance_to_level_via_portal(self, next_level_id)
+	elif game.has_method("advance_to_level_id"):
 		game.advance_to_level_id(next_level_id)

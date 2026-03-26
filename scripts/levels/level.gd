@@ -116,6 +116,10 @@ func get_render_origin() -> Vector2:
 	return render_origin
 
 
+func get_exit_portal() -> Area2D:
+	return exit_portal
+
+
 func set_active(value: bool) -> void:
 	active = value
 	for child in get_tree().get_nodes_in_group("enemies"):

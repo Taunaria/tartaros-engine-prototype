@@ -29,6 +29,7 @@ var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 @onready var xp_label: Label = $TopRight/Panel/MarginContainer/VBoxContainer/XPLabel
 @onready var amulet_icon: TextureRect = $TopRight/Panel/MarginContainer/VBoxContainer/AmuletIcon
 @onready var level_title: Label = $LevelTitle
+@onready var transition_debug_label: Label = $TransitionDebugLabel
 @onready var hint_label: Label = $HintLabel
 @onready var message_label: Label = $MessageLabel
 @onready var touch_controls_root: Control = $TouchControlsRoot
@@ -93,6 +94,7 @@ func _ready() -> void:
 	_set_mouse_passthrough(hint_label)
 	_set_mouse_passthrough(message_label)
 	_set_mouse_passthrough(level_title)
+	_set_mouse_passthrough(transition_debug_label)
 	hp_bar_under.color = Color8(96, 53, 53)
 	hp_bar_fill.color = Color8(245, 42, 16)
 	hp_bar_wrap.resized.connect(_refresh_hp_fill)
@@ -109,6 +111,7 @@ func _ready() -> void:
 	amulet_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	amulet_icon.custom_minimum_size = Vector2(42, 42)
 	hp_label.visible = true
+	transition_debug_label.visible = false
 	set_gold(0)
 	set_xp(0)
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
@@ -142,6 +145,7 @@ func hide_overlays() -> void:
 	landing_screen.visible = false
 	start_screen_background.visible = false
 	level_title.visible = false
+	transition_debug_label.visible = false
 	hint_label.visible = false
 	message_label.visible = false
 	_set_touch_controls_active(false)
@@ -240,8 +244,14 @@ func show_gameplay_hud() -> void:
 	start_screen_background.visible = false
 	hud_root.visible = true
 	top_right_root.visible = true
+	transition_debug_label.visible = not transition_debug_label.text.is_empty()
 	_set_touch_controls_active(true)
 	_update_crosshair_visibility()
+
+
+func set_transition_debug_text(text: String) -> void:
+	transition_debug_label.text = text
+	transition_debug_label.visible = not text.is_empty() and not landing_screen.visible and not death_screen.visible and not victory_screen.visible
 
 
 func set_game_ref(new_game_ref: Node) -> void:

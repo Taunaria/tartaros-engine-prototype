@@ -29,6 +29,8 @@ var touch_move_vector: Vector2 = Vector2.ZERO
 var touch_aim_screen_position: Vector2 = Vector2.ZERO
 var touch_attack_pressed: bool = false
 var touch_attack_held: bool = false
+var debug_last_transition_source_id: String = ""
+var debug_last_transition_target_id: String = ""
 
 @onready var level_container: Node2D = $LevelContainer
 @onready var entity_layer: Node2D = $EntityLayer
@@ -233,6 +235,22 @@ func advance_to_level(level_index: int) -> void:
 	call_deferred("_finish_level_transition")
 
 
+func advance_to_level_via_portal(portal: Node, level_id: String) -> void:
+	if portal == null or not is_instance_valid(portal):
+		return
+	if current_level == null or not is_instance_valid(current_level):
+		return
+	var current_exit_portal: Variant = null
+	if current_level.has_method("get_exit_portal"):
+		current_exit_portal = current_level.get_exit_portal()
+	if current_exit_portal != portal:
+		return
+	debug_last_transition_source_id = _get_current_level_id()
+	debug_last_transition_target_id = level_id
+	_update_transition_debug_ui("portal")
+	advance_to_level_id(level_id)
+
+
 func advance_to_level_id(level_id: String) -> void:
 	if level_id.is_empty():
 		complete_demo()
@@ -326,25 +344,29 @@ func complete_demo() -> void:
 func _load_level(level_index: int) -> void:
 	_clear_world_entities()
 	if current_level != null:
+		if current_level.get_parent() == level_container:
+			level_container.remove_child(current_level)
 		current_level.queue_free()
+		current_level = null
 
 	current_level_amulet_collected = false
 	set_combat_music_active(false)
 	_apply_level_music_for(levels[level_index].get("id", ""))
+	player.clear_amulet()
+	ui.set_amulet_collected(false)
 
 	current_level = LevelScene.instantiate()
 	level_container.add_child(current_level)
 	current_level.setup(self, levels[level_index], level_index, levels.size())
 	player.global_position = current_level.get_start_world_position()
 	player.set_render_origin(current_level.get_render_origin())
-	player.clear_amulet()
 	if current_level.has_method("set_active"):
 		current_level.set_active(true)
 	player.set_control_enabled(true)
-	ui.set_amulet_collected(false)
 	ui.show_level_title_text(levels[level_index].get("name", ""))
 	show_interaction_hint("")
 	_sync_ui_state(true)
+	_update_transition_debug_ui("loaded")
 
 
 func set_level_music(level_theme: AudioStream, action_theme: AudioStream) -> void:
@@ -503,6 +525,7 @@ func _sync_ui_state(ensure_gameplay_hud: bool = false) -> void:
 	if ui.has_method("set_gold"):
 		ui.set_gold(total_gold)
 	ui.set_amulet_collected(current_level_amulet_collected)
+	_update_transition_debug_ui("sync")
 
 
 func _get_level_index_by_id(level_id: String) -> int:
@@ -510,6 +533,37 @@ func _get_level_index_by_id(level_id: String) -> int:
 		if String(levels[index].get("id", "")) == level_id:
 			return index
 	return -1
+
+
+func _get_current_level_id() -> String:
+	if current_level == null or not is_instance_valid(current_level):
+		return ""
+	if current_level_index < 0 or current_level_index >= levels.size():
+		return ""
+	return String(levels[current_level_index].get("id", ""))
+
+
+func _update_transition_debug_ui(reason: String) -> void:
+	if ui == null or not is_instance_valid(ui) or not ui.has_method("set_transition_debug_text"):
+		return
+	var current_level_id: String = _get_current_level_id()
+	var text: String = ""
+	match reason:
+		"portal":
+			text = "Portal: %s -> %s" % [debug_last_transition_source_id, debug_last_transition_target_id]
+		"loaded":
+			text = "Geladen: %s | Portal: %s -> %s" % [current_level_id, debug_last_transition_source_id, debug_last_transition_target_id]
+		"sync":
+			if current_level_id.is_empty():
+				text = ""
+			elif debug_last_transition_source_id.is_empty() and debug_last_transition_target_id.is_empty():
+				text = "Aktiv: %s" % current_level_id
+			else:
+				text = "Aktiv: %s | Portal: %s -> %s" % [current_level_id, debug_last_transition_source_id, debug_last_transition_target_id]
+		_:
+			text = "Aktiv: %s" % current_level_id
+	ui.set_transition_debug_text(text)
+	print(text)
 
 
 func _refresh_combat_debug_draw() -> void:
