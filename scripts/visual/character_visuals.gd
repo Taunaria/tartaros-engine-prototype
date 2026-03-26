@@ -23,6 +23,12 @@ const VISUALS := {
 	"player": {
 		"default_texture_path": "res://assets/textures/characters/generated/player_warrior.png",
 		"directional_prefix": "player",
+		"state_direction_overrides": {
+			"attack": {
+				"left": "right",
+				"right": "left"
+			}
+		},
 		"draw_size": Vector2(54, 68),
 		"body_draw_height": 58.0,
 		"anchor_offset": Vector2(-27, -57),
@@ -255,7 +261,8 @@ static func _get_directional_texture_path(entry: Dictionary, direction_id: Strin
 		return ""
 	if not STATE_IDS.has(state_id):
 		return ""
-	return "res://assets/textures/characters/extended/%s_%s.png" % [prefix, get_animation_frame_name(state_id, direction_id, frame_id)]
+	var resolved_direction_id: String = _resolve_state_direction_id(entry, direction_id, state_id)
+	return "res://assets/textures/characters/extended/%s_%s.png" % [prefix, get_animation_frame_name(state_id, resolved_direction_id, frame_id)]
 
 
 static func _resolve_texture_path(entry: Dictionary, direction_id: String, state_id: String, frame_id: String = "") -> String:
@@ -354,6 +361,16 @@ static func _warn_missing_texture(path: String, fallback_path: String) -> void:
 		push_warning("CharacterVisuals: missing texture %s" % path)
 		return
 	push_warning("CharacterVisuals: missing texture %s, falling back to %s" % [path, fallback_path])
+
+
+static func _resolve_state_direction_id(entry: Dictionary, direction_id: String, state_id: String) -> String:
+	var state_overrides: Dictionary = entry.get("state_direction_overrides", {})
+	if state_overrides.is_empty():
+		return direction_id
+	var direction_overrides: Dictionary = state_overrides.get(state_id, {})
+	if direction_overrides.is_empty():
+		return direction_id
+	return String(direction_overrides.get(direction_id, direction_id))
 
 
 static func _get_texture_analysis(path: String) -> Dictionary:
