@@ -25,6 +25,8 @@ var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 @onready var top_right_root: Control = $TopRight
 @onready var weapon_icon: TextureRect = $TopRight/Panel/MarginContainer/VBoxContainer/WeaponIcon
 @onready var weapon_label: Label = $TopRight/Panel/MarginContainer/VBoxContainer/WeaponLabel
+@onready var gold_label: Label = $TopRight/Panel/MarginContainer/VBoxContainer/GoldLabel
+@onready var xp_label: Label = $TopRight/Panel/MarginContainer/VBoxContainer/XPLabel
 @onready var amulet_icon: TextureRect = $TopRight/Panel/MarginContainer/VBoxContainer/AmuletIcon
 @onready var level_title: Label = $LevelTitle
 @onready var hint_label: Label = $HintLabel
@@ -103,6 +105,8 @@ func _ready() -> void:
 	weapon_label.visible = false
 	amulet_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	hp_label.visible = true
+	set_gold(0)
+	set_xp(0)
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
 	amulet_icon.texture = ItemVisuals.get_amulet_icon()
 	set_amulet_collected(false)
@@ -161,6 +165,14 @@ func set_weapon(weapon_data) -> void:
 
 func set_amulet_collected(collected: bool) -> void:
 	amulet_icon.visible = collected
+
+
+func set_gold(amount: int) -> void:
+	gold_label.text = "Gold %d" % max(amount, 0)
+
+
+func set_xp(amount: int) -> void:
+	xp_label.text = "XP %d" % max(amount, 0)
 
 
 func show_level_title_text(text: String) -> void:

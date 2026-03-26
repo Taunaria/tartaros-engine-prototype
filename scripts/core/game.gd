@@ -22,6 +22,8 @@ var difficulty_multiplier: float = 1.0
 var difficulty_selected: bool = false
 var current_level_amulet_collected: bool = false
 var level_transition_in_progress: bool = false
+var total_xp: int = 0
+var total_gold: int = 0
 var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 var touch_move_vector: Vector2 = Vector2.ZERO
 var touch_aim_screen_position: Vector2 = Vector2.ZERO
@@ -56,6 +58,11 @@ func _ready() -> void:
 	ui.restart_requested.connect(start_new_run)
 	ui.quit_requested.connect(_quit_game)
 	ui.show_landing_screen(false)
+	if ui != null and is_instance_valid(ui):
+		if ui.has_method("set_xp"):
+			ui.set_xp(total_xp)
+		if ui.has_method("set_gold"):
+			ui.set_gold(total_gold)
 
 
 func _process(_delta: float) -> void:
@@ -101,6 +108,8 @@ func start_new_run() -> void:
 	run_state = "playing"
 	level_transition_in_progress = false
 	current_level_amulet_collected = false
+	total_xp = 0
+	total_gold = 0
 	reset_touch_input_state()
 	player.reset_for_new_run()
 	player.set_control_enabled(true)
@@ -112,6 +121,10 @@ func start_new_run() -> void:
 	_on_player_hp_changed(player.hp, player.max_hp)
 	_on_player_weapon_changed(player.get_current_weapon())
 	ui.set_amulet_collected(false)
+	if ui.has_method("set_xp"):
+		ui.set_xp(total_xp)
+	if ui.has_method("set_gold"):
+		ui.set_gold(total_gold)
 
 
 func get_difficulty_multiplier() -> float:
@@ -120,6 +133,16 @@ func get_difficulty_multiplier() -> float:
 
 func get_difficulty_id() -> String:
 	return selected_difficulty_id
+
+
+func get_barrel_loot_config() -> Dictionary:
+	match selected_difficulty_id:
+		"easy":
+			return {"count": 2, "gold_ratio": 0.65, "items_per_barrel": 3}
+		"hard":
+			return {"count": 6, "gold_ratio": 0.35, "items_per_barrel": 1}
+		_:
+			return {"count": 4, "gold_ratio": 0.5, "items_per_barrel": 2}
 
 
 func is_mobile_platform() -> bool:
@@ -268,6 +291,16 @@ func give_reward(reward: Dictionary) -> Dictionary:
 		if healed_amount > 0:
 			result["stat_popup_text"] = "+%d HP" % healed_amount
 			result["stat_popup_color"] = Color(0.64, 1.0, 0.7, 1.0)
+	elif reward_type == "gold":
+		var gold_amount: int = max(1, int(reward.get("amount", 1)))
+		total_gold += gold_amount
+		if ui != null and is_instance_valid(ui) and ui.has_method("set_gold"):
+			ui.set_gold(total_gold)
+		ui.show_pickup_message("+%d Gold" % gold_amount)
+		play_sfx("pickup")
+		result["consumed"] = true
+		result["stat_popup_text"] = "+%d Gold" % gold_amount
+		result["stat_popup_color"] = Color(1.0, 0.88, 0.38, 1.0)
 	elif reward_type == "amulet" and item_data != null:
 		player.obtain_amulet()
 		current_level_amulet_collected = true
@@ -345,6 +378,9 @@ func set_sfx_volume(value: float) -> void:
 func spawn_xp_popup(amount: int, world_position: Vector2) -> void:
 	if amount <= 0:
 		return
+	total_xp += amount
+	if ui != null and is_instance_valid(ui) and ui.has_method("set_xp"):
+		ui.set_xp(total_xp)
 	if feedback_layer == null or not is_instance_valid(feedback_layer):
 		return
 	if XpPopupScene == null:

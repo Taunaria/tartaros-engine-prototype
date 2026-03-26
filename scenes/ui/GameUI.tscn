@@ -148,26 +148,26 @@ anchor_right = 1.0
 offset_left = -220.0
 offset_top = 16.0
 offset_right = -16.0
-offset_bottom = 180.0
+offset_bottom = 244.0
 grow_horizontal = 0
 clip_contents = true
 
 [node name="Panel" type="Panel" parent="TopRight"]
 offset_right = 204.0
-offset_bottom = 140.0
+offset_bottom = 204.0
 clip_contents = true
 
 [node name="MarginContainer" type="MarginContainer" parent="TopRight/Panel"]
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 194.0
-offset_bottom = 130.0
+offset_bottom = 194.0
 clip_contents = true
 
 [node name="VBoxContainer" type="VBoxContainer" parent="TopRight/Panel/MarginContainer"]
 offset_right = 184.0
-offset_bottom = 110.0
-theme_override_constants/separation = 0
+offset_bottom = 174.0
+theme_override_constants/separation = 6
 clip_contents = true
 
 [node name="WeaponIcon" type="TextureRect" parent="TopRight/Panel/MarginContainer/VBoxContainer"]
@@ -178,6 +178,16 @@ clip_contents = true
 visible = false
 horizontal_alignment = 1
 text = "Dolch"
+
+[node name="GoldLabel" type="Label" parent="TopRight/Panel/MarginContainer/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+text = "Gold 0"
+
+[node name="XPLabel" type="Label" parent="TopRight/Panel/MarginContainer/VBoxContainer"]
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+text = "XP 0"
 
 [node name="AmuletIcon" type="TextureRect" parent="TopRight/Panel/MarginContainer/VBoxContainer"]
 custom_minimum_size = Vector2(42, 42)

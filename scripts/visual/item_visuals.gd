@@ -17,6 +17,7 @@ const WEAPON_ICON_PATHS := {
 
 const AMULET_ICON_PATH := "res://assets/textures/ui/items/amulet.png"
 const HEAL_DROP_ICON_PATH := "res://assets/textures/ui/items/heal_drop.png"
+const GOLD_COIN_PATH := "res://output/imagegen/items/gold_coin.png"
 const PORTAL_ACTIVE_PATH := "res://assets/textures/ui/portal/exit_active.png"
 const PORTAL_INACTIVE_PATH := "res://assets/textures/ui/portal/exit_inactive.png"
 const CROSSHAIR_PATH := "res://assets/textures/ui/crosshair.png"
@@ -41,6 +42,8 @@ static func get_reward_icon(reward_data: Dictionary) -> Texture2D:
 		return get_weapon_icon(reward_data.get("id", WeaponDB.get_default_weapon_id()))
 	if reward_type == "heal":
 		return _load_texture(HEAL_DROP_ICON_PATH)
+	if reward_type == "gold":
+		return _load_texture(GOLD_COIN_PATH)
 	if reward_type == "amulet":
 		return _load_texture(AMULET_ICON_PATH)
 	return null
@@ -51,6 +54,10 @@ static func get_amulet_icon() -> Texture2D:
 	if amulet_data != null and amulet_data.icon != null:
 		return amulet_data.icon
 	return _load_texture(AMULET_ICON_PATH)
+
+
+static func get_gold_icon() -> Texture2D:
+	return _load_texture(GOLD_COIN_PATH)
 
 
 static func get_portal_texture(active: bool) -> Texture2D:

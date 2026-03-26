@@ -391,7 +391,7 @@ func _apply_attack_hits(weapon: Dictionary) -> void:
 	for target in get_tree().get_nodes_in_group("player_attack_openables"):
 		if target == null or not is_instance_valid(target):
 			continue
-		if not target.has_method("open_chest"):
+		if not target.has_method("open_container"):
 			continue
 
 		var target_position: Vector2 = _get_attack_target_position(target)
@@ -404,7 +404,7 @@ func _apply_attack_hits(weapon: Dictionary) -> void:
 		if hit_targets.has(instance_id):
 			continue
 
-		var opened_target: bool = target.open_chest()
+		var opened_target: bool = target.open_container()
 		if not opened_target:
 			continue
 

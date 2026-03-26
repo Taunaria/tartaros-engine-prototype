@@ -187,6 +187,8 @@ func _get_reward_color() -> Color:
 		color = WeaponDB.get_weapon(weapon_id).color
 	elif reward_data.get("type", "") == "heal":
 		color = Color8(204, 82, 82)
+	elif reward_data.get("type", "") == "gold":
+		color = Color8(245, 205, 74)
 	elif reward_data.get("type", "") == "amulet":
 		color = Color8(110, 218, 255)
 	return color

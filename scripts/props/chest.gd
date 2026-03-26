@@ -1,68 +1,7 @@
-extends Area2D
+extends "res://scripts/props/container.gd"
 
-const IsoMapper := preload("res://scripts/core/iso.gd")
 const ChestClosedTexture := preload("res://output/imagegen/props/chest_closed.png")
 const ChestOpenTexture := preload("res://output/imagegen/props/chest_open.png")
-
-var reward_data: Dictionary = {}
-var game: Node = null
-var level: Node = null
-var opened: bool = false
-var render_origin: Vector2 = Vector2.ZERO
-
-
-func setup(game_ref: Node, level_ref: Node, reward: Dictionary) -> void:
-	game = game_ref
-	level = level_ref
-	reward_data = reward.duplicate(true)
-	queue_redraw()
-
-
-func set_active(_active: bool) -> void:
-	pass
-
-
-func set_render_origin(new_render_origin: Vector2) -> void:
-	render_origin = new_render_origin
-	z_index = 1000 + IsoMapper.entity_sort_z_for_foot(global_position) + 1
-	queue_redraw()
-
-
-func _ready() -> void:
-	add_to_group("player_attack_openables")
-
-
-func open_chest() -> bool:
-	if opened:
-		return false
-
-	opened = true
-	remove_from_group("player_attack_openables")
-	monitoring = false
-	collision_layer = 0
-	collision_mask = 0
-	if game != null and game.has_method("play_sfx"):
-		game.play_sfx("chest_open")
-	if game != null and game.has_method("spawn_xp_popup"):
-		game.spawn_xp_popup(25, global_position)
-	if not reward_data.is_empty():
-		if level != null and level.has_method("spawn_pickup_at_world"):
-			var player_position: Vector2 = global_position
-			if game != null and game.has_method("get_player"):
-				var player: Node = game.get_player()
-				if player != null and is_instance_valid(player):
-					player_position = player.global_position
-			var launch_direction := Vector2(1.0, 0.35)
-			if player_position.x >= global_position.x:
-				launch_direction.x = -1.0
-			level.spawn_pickup_at_world(global_position, reward_data, {
-				"spawn_arc": true,
-				"launch_offset": launch_direction.normalized() * 24.0
-			})
-		elif game != null and game.has_method("give_reward"):
-			game.give_reward(reward_data)
-	queue_redraw()
-	return true
 
 
 func _draw() -> void:

@@ -5,6 +5,7 @@ const TILE_SIZE := IsoMapper.LOGIC_TILE_SIZE
 const BlockTileScene := preload("res://scenes/visual/BlockTile.tscn")
 const EnemyScene := preload("res://scenes/enemies/Enemy.tscn")
 const ChestScene := preload("res://scenes/props/Chest.tscn")
+const BarrelScene := preload("res://scenes/props/Barrel.tscn")
 const ExitScene := preload("res://scenes/props/ExitPortal.tscn")
 const PickupScene := preload("res://scenes/props/WeaponPickup.tscn")
 
@@ -97,6 +98,7 @@ func setup(game_ref: Node, data: Dictionary, current_level_index: int, total_lev
 	_build_tiles()
 	_build_colliders()
 	_spawn_chest(level_data.get("chest", {}))
+	_spawn_barrels()
 	_spawn_amulet(level_data.get("amulet", {}))
 	_spawn_exit(current_level_index, total_levels)
 	_spawn_enemies()
@@ -426,9 +428,25 @@ func _spawn_chest(chest_data: Dictionary) -> void:
 
 	var chest: Area2D = ChestScene.instantiate()
 	chest.position = tile_to_world(chest_data.get("position", Vector2i.ZERO))
-	chest.setup(game, self, chest_data.get("reward", {}))
+	chest.setup(game, self, _build_chest_contents(chest_data))
 	chest.set_render_origin(render_origin)
 	props_root.add_child(chest)
+
+
+func _spawn_barrels() -> void:
+	if game == null or not game.has_method("get_barrel_loot_config"):
+		return
+	var loot_config: Dictionary = game.get_barrel_loot_config()
+	var barrel_count: int = int(loot_config.get("count", 0))
+	if barrel_count <= 0:
+		return
+	var barrel_tiles: Array = _select_barrel_tiles(barrel_count)
+	for tile in barrel_tiles:
+		var barrel: Area2D = BarrelScene.instantiate()
+		barrel.position = tile_to_world(tile)
+		barrel.setup(game, self, _build_barrel_contents(loot_config))
+		barrel.set_render_origin(render_origin)
+		props_root.add_child(barrel)
 
 
 func _spawn_exit(current_level_index: int, total_levels: int) -> void:
@@ -460,6 +478,91 @@ func _spawn_amulet(amulet_data: Dictionary) -> void:
 	})
 	pickup.set_render_origin(render_origin)
 	pickups_root.add_child(pickup)
+
+
+func _build_chest_contents(chest_data: Dictionary) -> Array:
+	var contents: Array = []
+	var primary_reward: Dictionary = chest_data.get("reward", {}).duplicate(true)
+	if not primary_reward.is_empty():
+		contents.append(primary_reward)
+	contents.append({"type": "heal", "amount": 2, "label": "Heiltrank"})
+	for _index in range(3):
+		contents.append({"type": "gold", "amount": 1, "label": "Muenze"})
+	return contents
+
+
+func _build_barrel_contents(loot_config: Dictionary) -> Array:
+	var contents: Array = []
+	var items_per_barrel: int = max(1, int(loot_config.get("items_per_barrel", 1)))
+	var gold_ratio: float = clampf(float(loot_config.get("gold_ratio", 0.5)), 0.0, 1.0)
+	for _index in range(items_per_barrel):
+		if randf() <= gold_ratio:
+			contents.append({"type": "gold", "amount": 1, "label": "Muenze"})
+		else:
+			contents.append({"type": "heal", "amount": 1, "label": "Heiltrank"})
+	return contents
+
+
+func _select_barrel_tiles(target_count: int) -> Array:
+	var candidates: Array = []
+	var reserved_tiles: Dictionary = {}
+	var start_tile: Vector2i = level_data.get("start", Vector2i.ZERO)
+	reserved_tiles[_tile_key(start_tile)] = true
+	var exit_tile: Vector2i = level_data.get("exit", Vector2i(-1, -1))
+	if exit_tile.x >= 0:
+		reserved_tiles[_tile_key(exit_tile)] = true
+	var chest_position: Vector2i = level_data.get("chest", {}).get("position", Vector2i(-1, -1))
+	if chest_position.x >= 0:
+		reserved_tiles[_tile_key(chest_position)] = true
+	var amulet_position: Vector2i = level_data.get("amulet", {}).get("position", Vector2i(-1, -1))
+	if amulet_position.x >= 0:
+		reserved_tiles[_tile_key(amulet_position)] = true
+	for enemy_data in level_data.get("enemies", []):
+		reserved_tiles[_tile_key(enemy_data.get("position", Vector2i.ZERO))] = true
+
+	var level_size: Vector2i = level_data.get("size", Vector2i.ZERO)
+	for y in range(1, level_size.y - 1):
+		for x in range(1, level_size.x - 1):
+			var tile := Vector2i(x, y)
+			if reserved_tiles.has(_tile_key(tile)):
+				continue
+			if not is_tile_walkable(tile):
+				continue
+			if tile.distance_to(start_tile) < 5:
+				continue
+			if _count_solid_neighbors(tile) == 0:
+				continue
+			candidates.append(tile)
+
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash("%s:%s:barrels" % [level_data.get("id", "level"), game.get_difficulty_id() if game != null and game.has_method("get_difficulty_id") else "normal"])
+	for index in range(candidates.size() - 1, 0, -1):
+		var swap_index: int = rng.randi_range(0, index)
+		var temp = candidates[index]
+		candidates[index] = candidates[swap_index]
+		candidates[swap_index] = temp
+
+	var selected: Array = []
+	for candidate in candidates:
+		var too_close: bool = false
+		for existing in selected:
+			if (existing as Vector2i).distance_to(candidate) < 3:
+				too_close = true
+				break
+		if too_close:
+			continue
+		selected.append(candidate)
+		if selected.size() >= target_count:
+			break
+	return selected
+
+
+func _count_solid_neighbors(tile: Vector2i) -> int:
+	var count: int = 0
+	for offset in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+		if is_tile_hard_blocked(tile + offset):
+			count += 1
+	return count
 
 
 func _spawn_enemies() -> void:
