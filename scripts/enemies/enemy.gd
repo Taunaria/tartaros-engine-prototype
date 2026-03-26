@@ -12,9 +12,9 @@ const ENEMY_HIT_PAUSE := 0.14
 const ENEMY_HIT_KNOCKBACK_SPEED := 78.0
 const ENEMY_HIT_KNOCKBACK_DECAY := 620.0
 const CLOSE_STRAFE_FACTOR := 0.42
-const PATH_REFRESH_INTERVAL := 0.24
-const PATH_WAYPOINT_REACHED_DISTANCE := 16.0
-const PATH_LOOKAHEAD_STEPS := 2
+const PATH_REFRESH_INTERVAL := 0.35
+const PATH_WAYPOINT_REACHED_DISTANCE := 6.0
+const PATH_LOOKAHEAD_STEPS := 1
 const STUCK_DETOUR_TRIGGER_TIME := 0.22
 const STUCK_DETOUR_DURATION := 0.34
 const DEATH_FADE_DELAY := 0.3
@@ -597,18 +597,17 @@ func _get_navigation_direction_to(delta: float, target_world: Vector2, default_d
 
 	var from_tile: Vector2i = current_level.world_to_tile(global_position)
 	var target_tile: Vector2i = current_level.world_to_tile(target_world)
-	if current_level.has_method("has_clear_tile_line") and current_level.has_clear_tile_line(from_tile, target_tile):
-		if desired_distance <= 0.0 or global_position.distance_to(target_world) > desired_distance + PATH_WAYPOINT_REACHED_DISTANCE:
-			_clear_navigation_path()
-			return default_direction
+	var effective_desired_distance: float = desired_distance
+	if current_level.has_method("has_clear_collision_tile_line") and not current_level.has_clear_collision_tile_line(from_tile, target_tile):
+		# When an obstacle blocks the player, route around it first instead of
+		# orbiting on the near side while trying to keep attack distance.
+		effective_desired_distance = 0.0
 
-	_update_navigation_path(delta, target_tile, target_world, desired_distance)
+	_update_navigation_path(delta, target_tile, target_world, effective_desired_distance)
 	var path_direction: Vector2 = _get_navigation_path_direction(from_tile)
 	if path_direction.length_squared() <= 0.001:
 		return _get_obstacle_detour_direction(target_world - global_position, close_mode)
-
-	var path_weight: float = 0.84 if close_mode else 0.9
-	return (path_direction * path_weight + default_direction * (1.0 - path_weight)).normalized()
+	return path_direction
 
 
 func _update_navigation_path(delta: float, target_tile: Vector2i, target_world: Vector2, desired_distance: float) -> void:

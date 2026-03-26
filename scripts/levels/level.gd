@@ -12,7 +12,7 @@ const PickupScene := preload("res://scenes/props/WeaponPickup.tscn")
 const GROUND_HEIGHT := 0
 const LOW_STRUCTURE_HEIGHT := 1
 const WALL_HEIGHT := 2
-const NAVIGATION_WALL_BUFFER_TILES := 1
+const NAVIGATION_WALL_BUFFER_TILES := 0
 const NAVIGATION_LOW_STRUCTURE_BUFFER_TILES := 0
 
 const THEMES := {
