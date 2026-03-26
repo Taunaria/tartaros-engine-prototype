@@ -25,6 +25,7 @@ const PICKUP_RISE_DISTANCE := 28.0
 const PICKUP_SCALE_BONUS := 0.35
 const INTRO_DURATION := 0.32
 const INTRO_ARC_HEIGHT := 18.0
+const AUTO_PICKUP_DISTANCE := 24.0
 
 
 func setup(game_ref: Node, reward: Dictionary, options: Dictionary = {}) -> void:
@@ -120,6 +121,12 @@ func _on_body_entered(body: Node) -> void:
 func _try_collect_overlapping_player() -> void:
 	if animation_state != "idle" or not monitoring:
 		return
+	if game != null and game.has_method("get_player"):
+		var player: Node = game.get_player()
+		if player != null and is_instance_valid(player) and player.is_in_group("player"):
+			if global_position.distance_to(player.global_position) <= AUTO_PICKUP_DISTANCE:
+				_try_collect(player)
+				return
 	for body in get_overlapping_bodies():
 		if body != null and is_instance_valid(body) and body.is_in_group("player"):
 			_try_collect(body)

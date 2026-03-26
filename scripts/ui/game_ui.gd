@@ -19,7 +19,7 @@ var mobile_platform: bool = OS.has_feature("mobile") or OS.has_feature("ios")
 @onready var hp_bar_under: ColorRect = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPBarUnder
 @onready var hp_fill_clip: Control = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPFillClip
 @onready var hp_bar_fill: ColorRect = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPFillClip/HPBarFill
-@onready var hp_label: Label = $HUD/Panel/MarginContainer/VBoxContainer/HPLabel
+@onready var hp_label: Label = $HUD/Panel/MarginContainer/VBoxContainer/HPBarWrap/HPLabel
 @onready var start_screen_background: TextureRect = $StartScreenBackground
 @onready var hud_root: Control = $HUD
 @onready var top_right_root: Control = $TopRight
@@ -101,7 +101,7 @@ func _ready() -> void:
 	weapon_icon.custom_minimum_size = Vector2(120, 120)
 	weapon_label.visible = false
 	amulet_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	hp_label.visible = false
+	hp_label.visible = true
 	set_weapon(WeaponDB.get_weapon(WeaponDB.get_default_weapon_id()))
 	amulet_icon.texture = ItemVisuals.get_amulet_icon()
 	set_amulet_collected(false)
@@ -142,7 +142,7 @@ func hide_overlays() -> void:
 func set_hp(current_hp: int, max_hp: int) -> void:
 	var ratio: float = 0.0 if max_hp <= 0 else clampf(float(current_hp) / float(max_hp), 0.0, 1.0)
 	_set_hp_fill_ratio(ratio)
-	hp_label.text = "HP %d / %d" % [current_hp, max_hp]
+	hp_label.text = "%d/%d" % [current_hp, max_hp]
 
 
 func set_weapon(weapon_data) -> void:
@@ -335,7 +335,7 @@ func _exit_tree() -> void:
 
 func _refresh_hp_fill() -> void:
 	var hp_text: String = hp_label.text.strip_edges()
-	var values: PackedStringArray = hp_text.trim_prefix("HP ").split("/")
+	var values: PackedStringArray = hp_text.split("/")
 	if values.size() != 2:
 		_set_hp_fill_ratio(1.0)
 		return
