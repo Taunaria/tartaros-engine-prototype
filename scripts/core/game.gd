@@ -177,12 +177,16 @@ func get_aim_screen_position() -> Vector2:
 
 
 func get_aim_vector(reference_world_position: Vector2, render_origin: Vector2) -> Vector2:
-	var aim_screen_position: Vector2 = get_aim_screen_position()
-	var aim_logic_position: Vector2 = IsoMapper.screen_to_logic(aim_screen_position, render_origin)
+	var aim_canvas_position: Vector2 = _get_aim_canvas_position()
+	var aim_logic_position: Vector2 = IsoMapper.screen_to_logic(aim_canvas_position, render_origin)
 	var aim_direction: Vector2 = aim_logic_position - reference_world_position
 	if aim_direction.length_squared() > 0.001:
 		return aim_direction.normalized()
 	return Vector2.ZERO
+
+
+func _get_aim_canvas_position() -> Vector2:
+	return get_viewport().get_canvas_transform().affine_inverse() * get_aim_screen_position()
 
 
 func get_attack_pressed() -> bool:

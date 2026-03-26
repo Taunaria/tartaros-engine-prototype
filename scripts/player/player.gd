@@ -621,7 +621,7 @@ func _is_attack_visual_state() -> bool:
 
 
 func _get_attack_direction_from_mouse() -> Vector2:
-	var mouse_logic: Vector2 = IsoMapper.screen_to_logic(get_viewport().get_mouse_position(), render_origin)
+	var mouse_logic: Vector2 = IsoMapper.screen_to_logic(get_global_mouse_position(), render_origin)
 	var direction: Vector2 = mouse_logic - global_position
 	if direction.length_squared() > 0.001:
 		return direction.normalized()
