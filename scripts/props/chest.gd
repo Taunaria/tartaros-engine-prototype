@@ -47,7 +47,18 @@ func open_chest() -> bool:
 		game.spawn_xp_popup(25, global_position)
 	if not reward_data.is_empty():
 		if level != null and level.has_method("spawn_pickup_at_world"):
-			level.spawn_pickup_at_world(global_position, reward_data)
+			var player_position: Vector2 = global_position
+			if game != null and game.has_method("get_player"):
+				var player: Node = game.get_player()
+				if player != null and is_instance_valid(player):
+					player_position = player.global_position
+			var launch_direction := Vector2(1.0, 0.35)
+			if player_position.x >= global_position.x:
+				launch_direction.x = -1.0
+			level.spawn_pickup_at_world(global_position, reward_data, {
+				"spawn_arc": true,
+				"launch_offset": launch_direction.normalized() * 24.0
+			})
 		elif game != null and game.has_method("give_reward"):
 			game.give_reward(reward_data)
 	queue_redraw()

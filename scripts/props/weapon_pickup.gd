@@ -10,17 +10,35 @@ var game: Node = null
 var reward_data: Dictionary = {}
 var item_data = null
 var render_origin: Vector2 = Vector2.ZERO
-var fade_elapsed: float = 0.0
-var fade_started: bool = false
+var animation_state: String = "idle"
+var pickup_elapsed: float = 0.0
+var aura_elapsed: float = 0.0
+var intro_elapsed: float = 0.0
+var intro_start_position: Vector2 = Vector2.ZERO
+var intro_target_position: Vector2 = Vector2.ZERO
+var draw_scale: float = 1.0
+var draw_alpha: float = 1.0
+var draw_lift: float = 0.0
 
-const FADE_DELAY := 0.2
-const FADE_DURATION := 0.6
+const PICKUP_DURATION := 0.55
+const PICKUP_RISE_DISTANCE := 28.0
+const PICKUP_SCALE_BONUS := 0.35
+const INTRO_DURATION := 0.32
+const INTRO_ARC_HEIGHT := 18.0
 
 
-func setup(game_ref: Node, reward: Dictionary) -> void:
+func setup(game_ref: Node, reward: Dictionary, options: Dictionary = {}) -> void:
 	game = game_ref
 	reward_data = reward.duplicate(true)
 	item_data = ItemDB.get_item_from_reward(reward_data)
+	intro_start_position = global_position
+	intro_target_position = global_position
+	if options.get("spawn_arc", false):
+		intro_target_position = intro_start_position + options.get("launch_offset", Vector2(24.0, 8.0))
+		animation_state = "intro"
+		pickup_elapsed = 0.0
+		intro_elapsed = 0.0
+		monitoring = false
 	queue_redraw()
 
 
@@ -39,26 +57,101 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not fade_started:
-		return
-
-	fade_elapsed += delta
-	var alpha: float = 1.0
-	if fade_elapsed > FADE_DELAY:
-		alpha = 1.0 - clampf((fade_elapsed - FADE_DELAY) / FADE_DURATION, 0.0, 1.0)
-	modulate.a = alpha
-	if fade_elapsed >= FADE_DELAY + FADE_DURATION:
-		queue_free()
+	aura_elapsed += delta
+	match animation_state:
+		"intro":
+			_tick_intro_animation(delta)
+		"pickup":
+			_tick_pickup_animation(delta)
+	queue_redraw()
 
 
 func _draw() -> void:
 	var base: Vector2 = IsoMapper.render_offset(position, render_origin)
+	base.y -= draw_lift
+	var pulse: float = 0.5 + 0.5 * sin(aura_elapsed * 3.6)
+	if animation_state == "idle":
+		var aura_color: Color = _get_reward_color()
+		aura_color.a = 0.14 + pulse * 0.12
+		draw_circle(base + Vector2(0.0, 1.0), 16.0 + pulse * 4.0, aura_color)
+		var ring_color := aura_color
+		ring_color.a *= 0.7
+		draw_arc(base + Vector2(0.0, 1.0), 18.0 + pulse * 5.0, 0.0, TAU, 40, ring_color, 2.0, true)
 	var texture: Texture2D = item_data.icon if item_data != null and item_data.icon != null else ItemVisuals.get_reward_icon(reward_data)
 	if texture != null:
-		draw_rect(Rect2(base + Vector2(-10, 10), Vector2(20, 6)), Color(0, 0, 0, 0.18))
-		draw_texture_rect(texture, Rect2(base + Vector2(-14, -18), Vector2(28, 28)), false)
+		var shadow_alpha: float = draw_alpha * (0.18 if animation_state != "pickup" else 0.12)
+		var texture_size := Vector2(28.0, 28.0) * draw_scale
+		var texture_pos := base + Vector2(-texture_size.x * 0.5, -texture_size.y + 10.0)
+		draw_rect(Rect2(base + Vector2(-10, 10), Vector2(20, 6)), Color(0, 0, 0, shadow_alpha))
+		draw_texture_rect(texture, Rect2(texture_pos, texture_size), false, Color(1, 1, 1, draw_alpha))
 		return
 
+	var color: Color = _get_reward_color()
+	color.a = draw_alpha
+	draw_rect(Rect2(base + Vector2(-8, 8), Vector2(16, 6)), Color(0, 0, 0, 0.2 * draw_alpha))
+	if reward_data.get("type", "") == "amulet":
+		var points := PackedVector2Array([
+			base + Vector2(0, -14) * draw_scale,
+			base + Vector2(8, -2) * draw_scale,
+			base + Vector2(0, 10) * draw_scale,
+			base + Vector2(-8, -2) * draw_scale
+		])
+		draw_polygon(
+			points,
+			[color]
+		)
+		draw_circle(base + Vector2(0, -2) * draw_scale, 3.0 * draw_scale, Color(1, 1, 1, draw_alpha))
+	else:
+		var size := Vector2(12.0, 20.0) * draw_scale
+		draw_rect(Rect2(base + Vector2(-size.x * 0.5, -10.0 * draw_scale), size), color)
+
+
+func _on_body_entered(body: Node) -> void:
+	if animation_state != "idle" or not body.is_in_group("player") or game == null:
+		return
+
+	if reward_data.get("type", "") == "amulet" and game.has_method("spawn_xp_popup"):
+		game.spawn_xp_popup(100, global_position)
+	var result: Dictionary = game.give_reward(reward_data)
+	if not result.get("consumed", false):
+		return
+	var popup_text: String = result.get("stat_popup_text", "")
+	if not popup_text.is_empty() and game.has_method("spawn_text_popup"):
+		game.spawn_text_popup(popup_text, global_position + Vector2(0.0, -20.0), result.get("stat_popup_color", Color.WHITE))
+	animation_state = "pickup"
+	pickup_elapsed = 0.0
+	monitoring = false
+	collision_layer = 0
+	collision_mask = 0
+	queue_redraw()
+
+
+func _tick_intro_animation(delta: float) -> void:
+	intro_elapsed += delta
+	var progress: float = clampf(intro_elapsed / INTRO_DURATION, 0.0, 1.0)
+	global_position = intro_start_position.lerp(intro_target_position, progress)
+	draw_lift = sin(progress * PI) * INTRO_ARC_HEIGHT
+	draw_scale = 1.0
+	draw_alpha = 1.0
+	set_render_origin(render_origin)
+	if progress >= 1.0:
+		global_position = intro_target_position
+		draw_lift = 0.0
+		animation_state = "idle"
+		monitoring = true
+
+
+func _tick_pickup_animation(delta: float) -> void:
+	pickup_elapsed += delta
+	var progress: float = clampf(pickup_elapsed / PICKUP_DURATION, 0.0, 1.0)
+	draw_lift = progress * PICKUP_RISE_DISTANCE
+	draw_scale = 1.0 + progress * PICKUP_SCALE_BONUS
+	draw_alpha = 1.0 - progress
+	if progress >= 1.0:
+		queue_free()
+
+
+func _get_reward_color() -> Color:
 	var color: Color = Color8(240, 210, 104)
 	if item_data != null and reward_data.get("type", "") == "weapon":
 		color = item_data.color
@@ -69,33 +162,4 @@ func _draw() -> void:
 		color = Color8(204, 82, 82)
 	elif reward_data.get("type", "") == "amulet":
 		color = Color8(110, 218, 255)
-
-	draw_rect(Rect2(base + Vector2(-8, 8), Vector2(16, 6)), Color(0, 0, 0, 0.2))
-	if reward_data.get("type", "") == "amulet":
-		draw_polygon(
-			PackedVector2Array([
-				base + Vector2(0, -14),
-				base + Vector2(8, -2),
-				base + Vector2(0, 10),
-				base + Vector2(-8, -2)
-			]),
-			[color]
-		)
-		draw_circle(base + Vector2(0, -2), 3.0, Color.WHITE)
-	else:
-		draw_rect(Rect2(base + Vector2(-6, -10), Vector2(12, 20)), color)
-
-
-func _on_body_entered(body: Node) -> void:
-	if fade_started or not body.is_in_group("player") or game == null:
-		return
-
-	if reward_data.get("type", "") == "amulet" and game.has_method("spawn_xp_popup"):
-		game.spawn_xp_popup(100, global_position)
-	game.give_reward(reward_data)
-	fade_started = true
-	fade_elapsed = 0.0
-	monitoring = false
-	collision_layer = 0
-	collision_mask = 0
-	queue_redraw()
+	return color

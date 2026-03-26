@@ -127,18 +127,18 @@ func set_active(value: bool) -> void:
 			child.set_active(value)
 
 
-func spawn_pickup(tile_position: Vector2i, reward: Dictionary) -> void:
-	spawn_pickup_at_world(tile_to_world(tile_position), reward)
+func spawn_pickup(tile_position: Vector2i, reward: Dictionary, options: Dictionary = {}) -> void:
+	spawn_pickup_at_world(tile_to_world(tile_position), reward, options)
 
 
-func spawn_pickup_at_world(world_position: Vector2, reward: Dictionary) -> void:
+func spawn_pickup_at_world(world_position: Vector2, reward: Dictionary, options: Dictionary = {}) -> void:
 	if reward.is_empty():
 		return
 
 	var pickup: Area2D = PickupScene.instantiate()
 	pickups_root.add_child(pickup)
 	pickup.global_position = world_position
-	pickup.setup(game, reward)
+	pickup.setup(game, reward, options)
 	pickup.set_render_origin(render_origin)
 
 

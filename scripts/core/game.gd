@@ -215,9 +215,14 @@ func advance_to_level(level_index: int) -> void:
 	_load_level(current_level_index)
 
 
-func give_reward(reward: Dictionary) -> void:
+func give_reward(reward: Dictionary) -> Dictionary:
+	var result: Dictionary = {
+		"consumed": false,
+		"stat_popup_text": "",
+		"stat_popup_color": Color.WHITE
+	}
 	if reward.is_empty():
-		return
+		return result
 
 	var item_data = ItemDB.get_item_from_reward(reward)
 	var reward_type: String = reward.get("type", "")
@@ -239,10 +244,20 @@ func give_reward(reward: Dictionary) -> void:
 		elif healed_amount > 0:
 			ui.show_pickup_message("Bekannte Waffe. +%d HP" % healed_amount)
 		play_sfx("pickup")
+		result["consumed"] = true
+		if healed_amount > 0:
+			result["stat_popup_text"] = "+%d HP" % healed_amount
+			result["stat_popup_color"] = Color(1.0, 0.86, 0.52, 1.0)
 	elif reward_type == "heal":
+		if player == null or not is_instance_valid(player) or player.hp >= player.max_hp:
+			return result
 		var healed_amount: int = player.heal(reward.get("amount", 0))
 		ui.show_pickup_message("+%d HP" % healed_amount)
 		play_sfx("pickup")
+		result["consumed"] = healed_amount > 0
+		if healed_amount > 0:
+			result["stat_popup_text"] = "+%d HP" % healed_amount
+			result["stat_popup_color"] = Color(0.64, 1.0, 0.7, 1.0)
 	elif reward_type == "amulet" and item_data != null:
 		player.obtain_amulet()
 		current_level_amulet_collected = true
@@ -251,6 +266,8 @@ func give_reward(reward: Dictionary) -> void:
 		play_sfx("pickup")
 		if current_level != null and current_level.has_method("refresh_exit_state"):
 			current_level.refresh_exit_state()
+		result["consumed"] = true
+	return result
 
 
 func show_interaction_hint(text: String) -> void:
@@ -326,6 +343,19 @@ func spawn_xp_popup(amount: int, world_position: Vector2) -> void:
 	feedback_layer.add_child(popup)
 	if popup.has_method("setup"):
 		popup.setup(amount, world_position)
+
+
+func spawn_text_popup(text: String, world_position: Vector2, color: Color = Color.WHITE) -> void:
+	if text.is_empty():
+		return
+	if feedback_layer == null or not is_instance_valid(feedback_layer):
+		return
+	if XpPopupScene == null:
+		return
+	var popup := XpPopupScene.instantiate()
+	feedback_layer.add_child(popup)
+	if popup.has_method("setup_text"):
+		popup.setup_text(text, world_position, color)
 
 
 func set_combat_music_active(active: bool) -> void:

@@ -12,11 +12,15 @@ var _time: float = 0.0
 
 
 func setup(amount: int, world_position: Vector2) -> void:
+	setup_text("+%d XP" % amount, world_position, Color(1.0, 1.0, 0.72, 1.0))
+
+
+func setup_text(text: String, world_position: Vector2, color: Color = Color(1.0, 1.0, 0.72, 1.0)) -> void:
 	position = world_position
-	label.text = "+%d XP" % amount
+	label.text = text
 	_time = 0.0
 	scale = Vector2.ONE
-	modulate = Color(1.0, 1.0, 0.72, 1.0)
+	modulate = color
 	queue_redraw()
 
 
@@ -28,4 +32,3 @@ func _process(delta: float) -> void:
 	modulate.a = clampf(1.0 - _time / lifetime, 0.0, 1.0)
 	if _time >= lifetime:
 		queue_free()
-
