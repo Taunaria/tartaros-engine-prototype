@@ -72,11 +72,16 @@ func _draw() -> void:
 	var pulse: float = 0.5 + 0.5 * sin(aura_elapsed * 3.6)
 	if animation_state == "idle":
 		var aura_color: Color = _get_reward_color()
-		aura_color.a = 0.14 + pulse * 0.12
-		draw_circle(base + Vector2(0.0, 1.0), 16.0 + pulse * 4.0, aura_color)
-		var ring_color := aura_color
-		ring_color.a *= 0.7
-		draw_arc(base + Vector2(0.0, 1.0), 18.0 + pulse * 5.0, 0.0, TAU, 40, ring_color, 2.0, true)
+		var glow_color: Color = aura_color.lerp(Color.WHITE, 0.42 + pulse * 0.18)
+		var cyan_ring: Color = aura_color.lerp(Color(0.24, 0.94, 1.0, 1.0), 0.52)
+		var pink_ring: Color = aura_color.lerp(Color(1.0, 0.38, 0.82, 1.0), 0.46)
+		glow_color.a = 0.2 + pulse * 0.18
+		cyan_ring.a = 0.22 + pulse * 0.14
+		pink_ring.a = 0.18 + (1.0 - pulse) * 0.16
+		draw_circle(base + Vector2(0.0, 2.0), 17.0 + pulse * 6.0, glow_color)
+		draw_circle(base + Vector2(0.0, 1.0), 11.0 + pulse * 3.0, Color(glow_color.r, glow_color.g, glow_color.b, glow_color.a * 0.8))
+		draw_arc(base + Vector2(0.0, 1.0), 20.0 + pulse * 6.0, 0.0, TAU, 48, cyan_ring, 3.0, true)
+		draw_arc(base + Vector2(0.0, 1.0), 14.0 + (1.0 - pulse) * 5.0, 0.0, TAU, 40, pink_ring, 2.0, true)
 	var texture: Texture2D = item_data.icon if item_data != null and item_data.icon != null else ItemVisuals.get_reward_icon(reward_data)
 	if texture != null:
 		var shadow_alpha: float = draw_alpha * (0.18 if animation_state != "pickup" else 0.12)

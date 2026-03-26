@@ -147,8 +147,14 @@ func set_hp(current_hp: int, max_hp: int) -> void:
 
 func set_weapon(weapon_data) -> void:
 	var resolved_weapon = weapon_data if weapon_data != null else WeaponDB.get_default_weapon()
+	var weapon_id: String = WeaponDB.get_default_weapon_id()
+	if resolved_weapon != null and "id" in resolved_weapon and not String(resolved_weapon.id).is_empty():
+		weapon_id = String(resolved_weapon.id)
 	weapon_label.text = resolved_weapon.display_name if resolved_weapon != null else "Dolch"
-	weapon_icon.texture = resolved_weapon.icon if resolved_weapon != null and resolved_weapon.icon != null else ItemVisuals.get_weapon_icon(WeaponDB.get_default_weapon_id())
+	var resolved_texture: Texture2D = ItemVisuals.get_weapon_icon(weapon_id)
+	if resolved_texture == null and resolved_weapon != null and resolved_weapon.icon != null:
+		resolved_texture = resolved_weapon.icon
+	weapon_icon.texture = resolved_texture
 	weapon_icon.tooltip_text = weapon_label.text
 
 
