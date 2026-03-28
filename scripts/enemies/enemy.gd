@@ -151,6 +151,7 @@ var patrol_points: Array = []
 var patrol_index: int = 0
 var patrol_wait_timer: float = 0.0
 var returning_to_post: bool = false
+var persistent_aggro: bool = false
 
 
 func setup(type_name: String, game_ref: Node, extra_data: Dictionary = {}) -> void:
@@ -190,6 +191,17 @@ func set_active(value: bool) -> void:
 		forced_detour_timer = 0.0
 		forced_detour_direction = Vector2.ZERO
 		_clear_navigation_path()
+
+
+func set_persistent_aggro(enabled: bool) -> void:
+	persistent_aggro = enabled
+	if not persistent_aggro:
+		return
+	returning_to_post = false
+	forced_detour_timer = 0.0
+	forced_detour_direction = Vector2.ZERO
+	_clear_navigation_path()
+	_set_engaged(true)
 
 
 func set_render_origin(new_render_origin: Vector2) -> void:
@@ -275,7 +287,7 @@ func _physics_process(delta: float) -> void:
 	var distance: float = to_player.length()
 	if to_player.length_squared() > 0.001:
 		facing_direction = _get_facing_direction(to_player)
-	if distance > stats["chase_range"]:
+	if not persistent_aggro and distance > stats["chase_range"]:
 		if _engaged:
 			_set_engaged(false)
 			returning_to_post = true

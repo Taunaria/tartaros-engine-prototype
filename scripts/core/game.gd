@@ -316,6 +316,8 @@ func give_reward(reward: Dictionary) -> Dictionary:
 		ui.show_pickup_message(item_data.display_name if not item_data.display_name.is_empty() else reward.get("label", "Amulett erhalten"))
 		ui.set_amulet_collected(true)
 		play_sfx("pickup")
+		if current_level != null and current_level.has_method("set_persistent_enemy_aggro"):
+			current_level.set_persistent_enemy_aggro(true)
 		if current_level != null and current_level.has_method("refresh_exit_state"):
 			current_level.refresh_exit_state()
 		result["consumed"] = true

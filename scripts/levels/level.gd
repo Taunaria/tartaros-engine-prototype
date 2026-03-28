@@ -133,6 +133,12 @@ func set_active(value: bool) -> void:
 			child.set_active(value)
 
 
+func set_persistent_enemy_aggro(enabled: bool) -> void:
+	for child in get_tree().get_nodes_in_group("enemies"):
+		if child.has_method("set_persistent_aggro"):
+			child.set_persistent_aggro(enabled)
+
+
 func spawn_pickup(tile_position: Vector2i, reward: Dictionary, options: Dictionary = {}) -> void:
 	spawn_pickup_at_world(tile_to_world(tile_position), reward, options)
 
